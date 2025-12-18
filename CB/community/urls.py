@@ -13,5 +13,8 @@ urlpatterns = [
     path('board/<slug:board_slug>/', views.post_list, name='post_list'),
     path('board/<slug:board_slug>/create/', views.post_create, name='post_create'),
     path('post/<int:post_id>/', views.post_detail, name='post_detail'),
-
+    path('post/<int:post_id>/comment/', views.comment_create, name='comment_create'),
+    path('comment/<int:comment_id>/delete/', views.comment_delete, name='comment_delete'),
+    path('post/<int:post_id>/delete/', views.post_delete, name='post_delete'),
+    path('all/', views.all_posts, name='all_posts'),  # 전체 글 보기 경로 추가
 ]

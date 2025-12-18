@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold"><i class="bi bi-grid-fill me-2"></i>대시보드</h2>
+        <p class="text-muted">안녕하세요, {{ user.nickname }}님! 오늘도 활기찬 하루 되세요.</p>
+    </div>
+</div>
+
+<div class="row">
+    {% for board in boards %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm border-0 hover-effect">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title fw-bold mb-0">{{ board.name }}</h4>
+                    {% if '공지' in board.name %}
+                        <i class="bi bi-megaphone-fill text-orange fs-4"></i>
+                    {% else %}
+                        <i class="bi bi-folder-fill text-primary fs-4"></i>
+                    {% endif %}
+                </div>
+                
+                <p class="card-text text-muted">
+                    {{ board.description|default:"게시판 설명이 없습니다." }}
+                </p>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <span class="small text-secondary">
+                        총 게시글: <strong>{{ board.posts.count }}</strong>개
+                    </span>
+                    
+                    <a href="{% url 'post_list' board.slug %}" class="btn btn-outline-primary btn-sm stretched-link">
+                        입장하기 <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-transparent border-top-0">
+                <small class="text-muted" style="font-size: 0.75rem;">
+                    <i class="bi bi-shield-lock"></i> 
+                    {% if board.read_access_depts.exists %}
+                        {% for dept in board.read_access_depts.all %}{{ dept.name }} {% endfor %}
+                    {% else %}
+                        전체 공개
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <p class="text-muted">생성된 게시판이 없습니다. 관리자 페이지에서 게시판을 추가해주세요.</p>
+        <a href="/admin" class="btn btn-dark">관리자 페이지로 이동</a>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .hover-effect { transition: transform 0.2s; }
+    .hover-effect:hover { transform: translateY(-5px); }
+</style>
+{% endblock %}

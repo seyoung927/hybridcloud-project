@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Rank  # Rank 모델도 관리자에서 봐야 하니까 추가!
+from .models import User, Rank, Department  # Rank 모델도 관리자에서 봐야 하니까 추가!
 
 # 1. Rank 모델을 관리자 페이지에 등록 (직급 추가/삭제용)
 admin.site.register(Rank)
@@ -21,3 +21,4 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('rank', 'department', 'is_staff', 'is_superuser')
 
 admin.site.register(User, CustomUserAdmin)
+admin.site.register(Department)

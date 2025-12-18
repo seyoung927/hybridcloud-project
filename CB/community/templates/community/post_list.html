@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">
+            {% if '공지' in board.name %}
+                <i class="bi bi-megaphone-fill text-orange me-2"></i>
+            {% else %}
+                <i class="bi bi-folder2-open text-primary me-2"></i>
+            {% endif %}
+            {{ board.name }}
+        </h3>
+        <span class="text-muted">{{ board.description }}</span>
+    </div>
+    
+    <div>
+        <a href="{% url 'board_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-grid-fill"></i> 대시보드
+        </a>
+        
+        {% if can_write_access %}
+            <a href="{% url 'post_create' board.slug %}" class="btn btn-primary ms-2">
+                <i class="bi bi-pencil-fill"></i> 글쓰기
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4 ms-auto">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="제목이나 작성자로 검색...">
+            <button class="btn btn-outline-secondary" type="button">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th scope="col" style="width: 8%;" class="text-center">번호</th>
+                <th scope="col" style="width: 50%;">제목</th>
+                <th scope="col" style="width: 15%;" class="text-center">작성자</th>
+                <th scope="col" style="width: 15%;" class="text-center">소속</th>
+                <th scope="col" style="width: 12%;" class="text-center">작성일</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for post in posts %}
+            <tr>
+                <td class="text-center text-muted">{{ post.id }}</td>
+                
+                <td>
+                    <a href="{% url 'post_detail' post.id %}" class="text-decoration-none text-dark fw-bold">
+                        {{ post.title }}
+                        
+                        {% if post.comments.count > 0 %}
+                            <span class="badge rounded-pill bg-orange ms-1" style="font-size: 0.7rem;">
+                                {{ post.comments.count }}
+                            </span>
+                        {% endif %}
+                        
+                        {% if post.file %}
+                            <i class="bi bi-paperclip text-muted ms-1"></i>
+                        {% endif %}
+                    </a>
+                </td>
+                
+                <td class="text-center">
+                    {{ post.author.nickname }}
+                </td>
+
+                <td class="text-center">
+                    <span class="badge bg-light text-dark border">
+                        {{ post.author.department.name|default:"-" }}
+                    </span>
+                    <span class="badge bg-secondary opacity-75">
+                        {{ post.author.rank.name|default:"-" }}
+                    </span>
+                </td>
+
+                <td class="text-center text-muted small">
+                    {{ post.created_at|date:"Y-m-d" }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                    등록된 게시글이 없습니다.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item disabled"><a class="page-link" href="#">이전</a></li>
+        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">다음</a></li>
+    </ul>
+</nav>
+{% endblock %}

@@ -3,6 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.http import HttpResponseForbidden
 from .models import Message, Notification
+import re 
+from django.contrib.auth import get_user_model
+from django.core.paginator import Paginator
+from .models import Post
 
 User = get_user_model()
 
@@ -69,31 +73,44 @@ from .models import Board, Post
 # 4. 게시판 목록 (Board List)
 def board_list(request):
     boards = Board.objects.all()
-    return render(request, 'community/board_list.html', {'boards': boards})
+    
+    # (선택사항) 템플릿에서 권한 체크를 쉽게 하기 위해
+    # 여기서 미리 필터링해서 보낼 수도 있지만, 
+    # 지금은 일단 다 보여주고 클릭 시 튕기게(이미 구현함) 하는 게 구현이 빠릅니다.
+    
+    context = {
+        'boards': boards,
+    }
+    return render(request, 'community/board_list.html', context)
 
 # 5. 글 목록 (Post List)
 @login_required
 def post_list(request, board_slug):
     board = get_object_or_404(Board, slug=board_slug)
     
-    # ★ 읽기 권한 체크 (Rank Power 이용)
-    # 유저 등급(user.rank_power)이 게시판 제한(read_min_rank)보다 낮으면?
-    if request.user.rank_power < board.read_min_rank:
-        messages.error(request, "이 게시판을 볼 권한이 없습니다.")
-        return redirect('board_list') # 쫓아냄
+    if not board.can_read(request.user):
+        messages.error(request, "🚫 접근 권한이 없는 게시판입니다.")
+        return redirect('board_list')
 
-    posts = board.posts.all()
-    return render(request, 'community/post_list.html', {'board': board, 'posts': posts})
+    posts = board.posts.all().order_by('-created_at')
+    
+    # ▼ [중요] 이 줄이 없으면 HTML이 권한을 몰라서 버튼을 숨겨버립니다!
+    can_write_access = board.can_write(request.user)
 
-# 6. 글 쓰기 (Post Create) - ★ 권한 제어의 핵심
+    return render(request, 'community/post_list.html', {
+        'board': board, 
+        'posts': posts,
+        # ▼ 이 변수도 꼭 넘겨줘야 합니다!
+        'can_write_access': can_write_access 
+    })
+
 @login_required
 def post_create(request, board_slug):
     board = get_object_or_404(Board, slug=board_slug)
     
-    # ★ 쓰기 권한 체크 (핵심 로직!)
-    # 사원(10)이 공지사항(40)에 쓰려고 하면 여기서 막힘
-    if request.user.rank_power < board.write_min_rank:
-        messages.error(request, "이 게시판에 글을 쓸 권한이 없습니다 (직급 부족).")
+    # ★ 바뀐 쓰기 권한 체크 로직
+    if not board.can_write(request.user):
+        messages.error(request, "🚫 이 게시판에 글을 쓸 권한이 없습니다.")
         return redirect('post_list', board_slug=board.slug)
 
     if request.method == 'POST':
@@ -122,3 +139,108 @@ def post_detail(request, post_id):
     post.save()
     
     return render(request, 'community/post_detail.html', {'post': post})
+
+# 10. 게시글 삭제 (Soft Delete 버전)
+@login_required
+def post_delete(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    
+    if post.author != request.user and not request.user.is_superuser:
+        messages.error(request, "삭제 권한이 없습니다.")
+        return redirect('post_detail', post_id=post.id)
+        
+    # ★ DB에서 지우지 않고 '숨김' 처리만 함
+    post.is_active = False 
+    post.save()
+    
+    return redirect('post_list', board_slug=post.board.slug)
+
+from .models import Post, Comment # Comment 모델 임포트 확인!
+
+# 8. 댓글 작성 (Comment Create)
+@login_required
+def comment_create(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+
+
+import re # 정규표현식 모듈
+from django.contrib.auth import get_user_model
+
+# 기존 comment_create 함수를 업그레이드
+@login_required
+def comment_create(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if not post.board.can_read(request.user):
+        messages.error(request, "권한이 없습니다.")
+        return redirect('board_list')
+    
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            # 1. 댓글 저장
+            comment = Comment.objects.create(
+                post=post,
+                author=request.user,
+                content=content
+            )
+            
+            # 2. 멘션 감지 로직 (@닉네임 패턴 찾기)
+            # 예: "안녕하세요 @김부장 님" -> ['김부장'] 추출
+            mentioned_nicknames = re.findall(r'@(\w+)', content)
+            
+            # 3. 멘션된 유저들에게 알림 발송
+            User = get_user_model()
+            for nickname in set(mentioned_nicknames): # 중복 제거 (set)
+                try:
+                    target_user = User.objects.get(nickname=nickname)
+                    
+                    # 본인이 본인을 멘션한 건 알림 제외
+                    if target_user != request.user:
+                        Notification.objects.create(
+                            recipient=target_user,
+                            sender=request.user,
+                            message=f"💬 {request.user.nickname}님이 댓글에서 언급했습니다: {content[:20]}...",
+                            link=f"/community/post/{post.id}/"
+                        )
+                except User.DoesNotExist:
+                    continue # 없는 닉네임이면 무시
+                    
+    return redirect('post_detail', post_id=post.id)
+
+# 9. 댓글 삭제 (Comment Delete)
+@login_required
+def comment_delete(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    
+    # 보안: 작성자 본인(또는 관리자)만 삭제 가능
+    if request.user != comment.author and not request.user.is_superuser:
+        messages.error(request, "삭제 권한이 없습니다.")
+        return redirect('post_detail', post_id=comment.post.id)
+        
+    post_id = comment.post.id # 삭제하고 돌아갈 곳 저장
+    comment.delete()
+    return redirect('post_detail', post_id=post_id)
+
+
+@login_required
+def all_posts(request):
+    """
+    모든 게시판의 글을 최신순으로 모아보기 (전체 글 보기)
+    """
+    # 1. 모든 글 가져오기 (작성일 역순)
+    posts = Post.objects.all().order_by('-created_at')
+    
+    # 2. 검색어 처리 (제목 or 내용)
+    q = request.GET.get('q', '')
+    if q:
+        posts = posts.filter(Q(title__icontains=q) | Q(content__icontains=q))
+
+    # 3. 페이징 처리 (15개씩)
+    paginator = Paginator(posts, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'community/all_posts.html', {
+        'page_obj': page_obj,
+        'query': q,
+    })
