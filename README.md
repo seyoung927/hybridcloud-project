@@ -83,11 +83,3 @@
 - 2026.01.16 : 최종 발표
 
 ---
-
-## 실행 방법
-
-```bash
-git clone git@github.com:username/hybridcloud-project.git
-cd hybridcloud-project
-pip install -r requirements.txt
-python ma
