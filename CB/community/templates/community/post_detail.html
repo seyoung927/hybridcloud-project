@@ -79,7 +79,9 @@
                             <div class="d-flex justify-content-between">
                                 <strong class="text-dark">
                                     {{ comment.author.nickname }} 
+                                    {% if comment.author.department %}
                                     <span class="text-muted fw-normal small">({{ comment.author.department.name }})</span>
+                                    {% endif %}
                                 </strong>
                                 <small class="text-muted">{{ comment.created_at|date:"m-d H:i" }}</small>
                             </div>

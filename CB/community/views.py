@@ -157,10 +157,6 @@ def post_delete(request, post_id):
 
 from .models import Post, Comment # Comment 모델 임포트 확인!
 
-# 8. 댓글 작성 (Comment Create)
-@login_required
-def comment_create(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
 
 
 import re # 정규표현식 모듈

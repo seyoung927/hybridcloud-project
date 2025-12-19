@@ -14,11 +14,11 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv  # [추가] 환경변수 로드
 
-# 1. .env 파일 활성화
-load_dotenv()
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# 1. Base Directory 설정
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# 2. .env 파일 로드 (이 코드가 if문보다 위에 있어야 함)
+load_dotenv(BASE_DIR / '.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -26,9 +26,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-mo)pqf9f%$p$&(7k+@34%7$^gu_^k0r@a312j3m3cgkg*su(!@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -80,17 +77,40 @@ WSGI_APPLICATION = 'CB.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'), # 없으면 sqlite로
-        'NAME': os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3'),
-        'USER': os.getenv('DB_USER', ''),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', ''),
+if os.environ.get('DEV') == 'True':
+    # [로컬 개발 환경]
+    print("📢 현재 모드: 로컬 개발 (SQLite)")
+    DEBUG = True
+    ALLOWED_HOSTS = ['*'] # 개발할 땐 편하게
+    
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # [AWS 서버 환경]
+    print("🚀 현재 모드: AWS 배포 (MySQL/RDS)")
+    DEBUG = False
+    # 서버 IP나 도메인을 꼭 넣어야 함 (보안 에러 방지)
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '여기에_EC2_퍼블릭IP'] 
 
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            # .env에서 실제 값을 가져오도록 수정했습니다
+            'NAME': os.environ.get('DB_NAME'),     
+            'USER': os.environ.get('DB_USER'),
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': os.environ.get('DB_HOST'),
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {'charset': 'utf8mb4'},
+        }
+    }
+ALLOWED_HOSTS = ['*']
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key')
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
