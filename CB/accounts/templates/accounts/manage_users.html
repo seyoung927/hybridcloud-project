@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>👑 인사 관리 (관리자 전용)</h3>
+    <span class="badge bg-dark">총 {{ users.count }}명</span>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>이름(닉네임)</th>
+                    <th>현재 부서</th>
+                    <th>현재 직급</th>
+                    <th>가입일</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="fw-bold">
+                        {% if u.is_superuser %} <span class="text-danger">[관리자]</span> {% endif %}
+                        {{ u.nickname }} ({{ u.username }})
+                    </td>
+                    <td><span class="badge bg-secondary">{{ u.department.name|default:"미정" }}</span></td>
+                    <td>{{ u.rank.name|default:"-" }}</td>
+                    <td class="text-muted small">{{ u.date_joined|date:"Y-m-d" }}</td>
+                    <td>
+                        <a href="{% url 'user_update' u.id %}" class="btn btn-sm btn-outline-primary">
+                            정보 수정
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

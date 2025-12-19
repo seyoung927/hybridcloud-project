@@ -1,0 +1,119 @@
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-white border-end">
+    <div class="position-sticky pt-3">
+        
+        {% if user.is_authenticated %}
+            <div class="profile-card mx-3 p-3 mb-3 text-center bg-light rounded border">
+                
+                {% if user.profile_image %}
+                    <img src="{{ user.profile_image.url }}" class="rounded-circle mb-2" width="70" height="70" style="object-fit: cover; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                {% else %}
+                    <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center mx-auto mb-2" style="width: 70px; height: 70px; color: white; font-size: 30px;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                {% endif %}
+                
+                <h6 class="fw-bold mb-0 text-dark">{{ user.nickname }}</h6>
+                <small class="text-muted d-block">
+                    {{ user.department.name|default:"무소속" }} / {{ user.rank.name|default:"-" }}
+                </small>
+                
+                <div class="mt-2 mb-3">
+                    <span class="badge bg-success">Online</span>
+                    {% if user.is_superuser %}
+                        <span class="badge bg-danger">ADMIN</span>
+                    {% endif %}
+                </div>
+
+                <form action="{% url 'logout' %}" method="post" class="d-grid">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-orange btn-sm">
+                        <i class="bi bi-box-arrow-right"></i> 로그아웃
+                    </button>
+                </form>
+            </div>
+
+        {% else %}
+            <div class="mx-3 p-4 mb-3 text-center bg-light rounded border">
+                <i class="bi bi-shield-lock-fill fs-1 text-secondary mb-2"></i>
+                <p class="small text-muted mb-3">사내 업무 시스템입니다.<br>로그인 후 이용해주세요.</p>
+                <a href="{% url 'login' %}" class="btn btn-primary w-100 fw-bold">
+                    로그인 하기
+                </a>
+            </div>
+        {% endif %}
+
+
+        <ul class="nav flex-column px-2">
+            <li class="nav-item mb-1">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'board_list' %}">
+                    <i class="bi bi-grid-fill me-3 fs-5"></i> 
+                    <span class="fw-medium">대시보드</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'inbox' %}">
+                    <i class="bi bi-envelope-fill me-3 fs-5"></i> 
+                    <span class="fw-medium">쪽지함</span>
+        
+                    {% if unread_msg_count > 0 %}
+                        <span class="badge bg-orange rounded-pill ms-auto">{{ unread_msg_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'org_chart' %}">
+                    <i class="bi bi-diagram-3-fill me-3 fs-5"></i> 
+                    <span class="fw-medium">조직도</span>
+                </a>
+            </li>
+        </ul>
+
+        <hr class="my-3 mx-3">
+
+        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-2 text-muted text-uppercase small fw-bold">
+            <span>게시판</span>
+        </h6>
+        <ul class="nav flex-column px-2 mb-2">
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'all_posts' %}">
+                    <i class="bi bi-card-list me-3"></i>
+                    전체 글 보기
+                </a>
+            </li>
+            </ul>
+
+
+        {% if user.is_superuser %}
+            <hr class="my-3 mx-3">
+            <h6 class="sidebar-heading px-3 mb-2 text-danger fw-bold small">
+                <i class="bi bi-gear-fill me-1"></i> ADMIN
+            </h6>
+            <ul class="nav flex-column px-2">
+                <li class="nav-item mb-1">
+                    <a class="nav-link text-danger hover-bg-light rounded p-2" href="{% url 'manage_home' %}">
+                        <i class="bi bi-people-fill me-3"></i> 관리자센터
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-danger hover-bg-light rounded p-2" href="/admin" target="_blank">
+                        <i class="bi bi-database-fill me-3"></i> DB 관리 (Django)
+                    </a>
+                </li>
+            </ul>
+        {% endif %}
+        
+    </div>
+</nav>
+
+<style>
+    .hover-bg-light:hover {
+        background-color: #f8f9fa; /* 배경색: 연한 회색 */
+        color: #0d6efd !important; /* 글자색: 파란색 */
+        transition: 0.2s;          /* 부드럽게 바뀌기 */
+    }
+    /* 현재 보고 있는 메뉴 강조 */
+    .nav-link.active {
+        color: #0d6efd;
+        background-color: #e7f1ff;
+    }
+</style>

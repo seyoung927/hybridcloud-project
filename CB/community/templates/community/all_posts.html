@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold">
+        <i class="bi bi-collection-fill text-primary me-2"></i>전체 글 보기
+    </h3>
+    
+    <form class="d-flex" method="GET">
+        <input class="form-control me-2" type="search" name="q" placeholder="전체 게시글 검색..." value="{{ query }}">
+        <button class="btn btn-outline-primary" type="submit">검색</button>
+    </form>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th width="5%" class="text-center">번호</th>
+                    <th width="15%" class="text-center">게시판</th>
+                    <th>제목</th>
+                    <th width="10%" class="text-center">작성자</th>
+                    <th width="15%" class="text-center">작성일</th>
+                    <th width="8%" class="text-center">조회</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in page_obj %}
+                <tr style="cursor: pointer;" onclick="location.href='{% url 'post_detail' post.id %}'">
+                    <td class="text-center text-muted">{{ post.id }}</td>
+                    
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark border">
+                            {{ post.board.name }}
+                        </span>
+                    </td>
+                    
+                    <td>
+                        {{ post.title }}
+                        {% if post.file %}
+                            <i class="bi bi-paperclip text-muted small ms-1"></i>
+                        {% endif %}
+                        {% if post.comments.count > 0 %}
+                            <span class="text-danger small ms-1">[{{ post.comments.count }}]</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {{ post.author.nickname }}
+                        <small class="text-muted d-block" style="font-size:0.7em">{{ post.author.department.name }}</small>
+                    </td>
+                    <td class="text-center text-muted small">{{ post.created_at|date:"Y-m-d" }}</td>
+                    <td class="text-center text-muted small">{{ post.views }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">등록된 게시글이 없습니다.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-center py-3">
+        <ul class="pagination mb-0">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}">이전</a></li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}&q={{ query }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}">다음</a></li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

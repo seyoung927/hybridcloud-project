@@ -11,21 +11,35 @@ class Rank(models.Model):
 
     def __str__(self):
         return f"{self.name}(Lv.{self.level})"
+    
+class Department(models.Model):
+    name = models.CharField(max_length=50, unique=True) # 예: 개발팀, 인사팀
+    description = models.TextField(blank=True)          # 예: IT 서비스 개발 전담
+    
+    def __str__(self):
+        return self.name
 
 class User(AbstractUser):
     nickname = models.CharField(max_length=20, blank=True)
-    department = models.CharField(max_length=50, blank=True)
     
-    # 2. 이제 숫자가 아니라 Rank 모델을 바라봅니다.
-    # on_delete=models.SET_NULL: 직급이 삭제돼도 유저는 남겨둠 (직급 없음 상태)
+    # 부서 연결 (새로 추가됨)
+    department = models.ForeignKey(
+        Department, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='members'  # ★ 이제부터 'user_set' 대신 'members'로 부릅니다!
+    )
     rank = models.ForeignKey(Rank, on_delete=models.SET_NULL, null=True, blank=True)
+    profile_image = models.ImageField(upload_to='profiles/%Y/%m/', blank=True, null=True)
 
-    def __str__(self):
-        # 직급이 없으면 '미정' 출력
-        rank_name = self.rank.name if self.rank else "미정"
-        return f"[{rank_name}] {self.username}"
-        
-    # ★ 꿀팁: 템플릿이나 코드에서 user.rank_power 로 편하게 숫자를 쓰기 위한 속성
     @property
     def rank_power(self):
         return self.rank.level if self.rank else 0
+        
+    def __str__(self):
+        dept = self.department.name if self.department else "무소속"
+        rank = self.rank.name if self.rank else "미정"
+        return f"[{dept}/{rank}] {self.username}"
+    
+    

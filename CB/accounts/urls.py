@@ -16,4 +16,12 @@ urlpatterns = [
     
     # 4. 프로필
     path('profile/', views.profile, name='profile'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
+    path('manage/update/<int:user_id>/', views.user_update, name='user_update'),
+    path('manage/', views.manage_home, name='manage_home'),           # 관리자 홈
+    path('manage/users/', views.manage_users, name='manage_users'),   # 사원 목록
+    path('manage/create/', views.user_create, name='user_create'),    # 사원 추가
+    path('manage/structure/', views.manage_structure, name='manage_structure'), #부서 관리
+    path('org/', views.org_chart, name='org_chart'),
+
 ]

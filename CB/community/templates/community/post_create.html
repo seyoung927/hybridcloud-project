@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        
+        <div class="card shadow border-0">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <h4 class="fw-bold mb-0">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>글 쓰기
+                </h4>
+                <small class="text-muted">{{ board.name }}에 새로운 글을 작성합니다.</small>
+            </div>
+
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="title" class="form-label fw-bold">제목</label>
+                        <input type="text" name="title" id="title" class="form-control form-control-lg" placeholder="제목을 입력하세요" required autofocus>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="content" class="form-label fw-bold">내용</label>
+                        <textarea name="content" id="content" rows="12" class="form-control" placeholder="내용을 자유롭게 작성해주세요." required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="file" class="form-label fw-bold">첨부파일</label>
+                        <div class="input-group">
+                            <input type="file" name="file" id="file" class="form-control">
+                            <label class="input-group-text" for="file">업로드</label>
+                        </div>
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle"></i> 이미지나 문서를 첨부할 수 있습니다.
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'post_list' board.slug %}" class="btn btn-light btn-lg">취소</a>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="bi bi-save me-1"></i> 등록하기
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

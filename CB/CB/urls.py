@@ -16,9 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from community import views as community_views
 
 urlpatterns = [
+    path('', community_views.board_list, name='home'),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')), # 나중에 로그인용
     path('community/', include('community.urls')), # 방금 만든 커뮤니티 URL 연결
+    path('messenger/', include('messenger.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
