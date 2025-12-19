@@ -161,11 +161,18 @@ LOGIN_REDIRECT_URL = '/community/'
 # 로그아웃 시 이동할 URL (로그인 페이지)
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
+# 1. 개발할 때 쓰는 정적 파일 위치
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# 2. 배포할 때 모이는 위치 (Nginx가 바라볼 곳)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+# 3. 미디어 파일 (유저 업로드) 설정
+# URL은 웹에서 접근하는 주소
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-import os
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
+# ROOT는 실제 파일이 저장되는 서버 경로
+MEDIA_ROOT = BASE_DIR / 'media'
