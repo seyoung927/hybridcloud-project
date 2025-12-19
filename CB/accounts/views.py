@@ -104,9 +104,13 @@ def manage_structure(request):
         
         elif 'add_rank' in request.POST:
             name = request.POST.get('rank_name')
-            if name:
-                Rank.objects.create(name=name) # 순서는 나중에 구현
-                messages.success(request, f"직급 '{name}' 추가 완료")
+            level = request.POST.get('rank_level') # HTML의 name="rank_level" 값을 가져옴
+    
+            if name and level:
+        # Rank 모델은 name과 level 필드를 모두 필요로 합니다
+                Rank.objects.create(name=name, level=level)
+                messages.success(request, f"직급 '{name}'(Lv.{level})이 생성되었습니다.")
+            return redirect('manage_structure')
 
         # 삭제 로직 (name='delete_dept' value='ID')
         elif 'delete_dept' in request.POST:

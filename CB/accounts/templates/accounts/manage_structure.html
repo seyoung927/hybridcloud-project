@@ -43,7 +43,8 @@
                 <form method="POST" class="input-group mb-3">
                     {% csrf_token %}
                     <input type="text" name="rank_name" class="form-control" placeholder="새 직급명 입력" required>
-                    <button type="submit" name="add_rank" class="btn btn-success">추가</button>
+		    <input type="number" name="rank_level" class="form-control" placeholder="레벨(숫자)" required>
+		    <button type="submit" name="add_rank" class="btn btn-success">추가</button>
                 </form>
 
                 <ul class="list-group">
