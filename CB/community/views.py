@@ -240,3 +240,24 @@ def all_posts(request):
         'page_obj': page_obj,
         'query': q,
     })
+
+@login_required
+def manage_boards(request):
+    # 관리자만 접근 가능하게 하려면 아래 줄 주석 해제
+    # if not request.user.is_staff: return redirect('home')
+
+    if request.method == 'POST':
+        form = BoardCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('community:manage_boards')  # 생성 후 목록으로 새로고침
+    else:
+        form = BoardCreationForm()
+
+    # 이미 만들어진 게시판 목록도 같이 보여주기
+    boards = Board.objects.all().order_by('-created_at')
+
+    return render(request, 'community/manage_boards.html', {
+        'form': form,
+        'boards': boards
+    })
