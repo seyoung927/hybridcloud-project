@@ -18,7 +18,7 @@ from dotenv import load_dotenv  # [추가] 환경변수 로드
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 2. .env 파일 로드 (이 코드가 if문보다 위에 있어야 함)
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / '.env', override=True)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
