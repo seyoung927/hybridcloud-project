@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold"><i class="bi bi-journal-plus text-warning me-2"></i>게시판 관리</h3>
-            <p class="text-muted mb-0">새로운 게시판을 생성하거나 기존 게시판의 권한을 확인합니다.</p>
+            <p class="text-muted mb-0">새로운 게시판을 생성하고 권한을 관리합니다.</p>
         </div>
         <a href="{% url 'manage_home' %}" class="btn btn-secondary btn-sm">
             <i class="bi bi-arrow-left"></i> 관리자 센터로
@@ -13,7 +13,7 @@
     </div>
 
     <div class="row g-4">
-        <div class="col-lg-4">
+        <div class="col-lg-5">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3">
                     <h5 class="fw-bold m-0"><i class="bi bi-plus-circle me-2"></i>새 게시판 만들기</h5>
@@ -22,10 +22,15 @@
                     <form method="post">
                         {% csrf_token %}
                         
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">게시판 이름</label>
-                            {{ form.name }}
-                            <div class="form-text">예: 공지사항, 자유게시판, 개발팀 이슈</div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">이름</label>
+                                {{ form.name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">URL ID(영어)</label>
+                                {{ form.slug }}
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -33,19 +38,37 @@
                             {{ form.description }}
                         </div>
 
-                        <div class="row mb-4">
-                            <div class="col-6">
-                                <label class="form-label fw-bold">쓰기 권한</label>
-                                {{ form.write_permission }}
-                                <div class="form-text" style="font-size: 0.8rem;">0:전체, 1:직원, 2:관리자</div>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label fw-bold">읽기 권한</label>
-                                {{ form.read_permission }}
+                        <hr>
+                        
+                        <div class="mb-3">
+                            <label class="fw-bold text-primary mb-2"><i class="bi bi-eye"></i> 읽기 권한</label>
+                            <div class="card bg-light border-0 p-2">
+                                <small class="d-block text-muted mb-1">부서 (선택 안 하면 전체 허용)</small>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    {{ form.read_access_depts }}
+                                </div>
+                                <small class="d-block text-muted mb-1">직급 (선택 안 하면 전체 허용)</small>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {{ form.read_access_ranks }}
+                                </div>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-warning w-100 fw-bold text-white">
+                        <div class="mb-3">
+                            <label class="fw-bold text-danger mb-2"><i class="bi bi-pencil-square"></i> 쓰기 권한</label>
+                            <div class="card bg-light border-0 p-2">
+                                <small class="d-block text-muted mb-1">부서</small>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    {{ form.write_access_depts }}
+                                </div>
+                                <small class="d-block text-muted mb-1">직급</small>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {{ form.write_access_ranks }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 fw-bold text-white mt-3">
                             <i class="bi bi-check-lg"></i> 게시판 생성
                         </button>
                     </form>
@@ -53,36 +76,42 @@
             </div>
         </div>
 
-        <div class="col-lg-8">
+        <div class="col-lg-7">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3">
-                    <h5 class="fw-bold m-0"><i class="bi bi-list-ul me-2"></i>운영 중인 게시판 목록</h5>
+                    <h5 class="fw-bold m-0"><i class="bi bi-list-ul me-2"></i>게시판 목록</h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-4">이름</th>
-                                    <th>설명</th>
-                                    <th class="text-center">권한(R/W)</th>
-                                    <th class="text-center">생성일</th>
+                                    <th class="ps-4">게시판 정보</th>
+                                    <th>읽기 제한</th>
+                                    <th>쓰기 제한</th>
                                     <th class="text-center">관리</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for board in boards %}
                                 <tr>
-                                    <td class="ps-4 fw-bold text-primary">
-                                        <i class="bi bi-hash text-muted me-1"></i>{{ board.name }}
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-dark">{{ board.name }}</div>
+                                        <div class="small text-muted">/board/{{ board.slug }}</div>
                                     </td>
-                                    <td>{{ board.description|default:"-" }}</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-light text-dark border">R:{{ board.read_permission }}</span>
-                                        <span class="badge bg-light text-dark border">W:{{ board.write_permission }}</span>
+                                    <td>
+                                        {% if board.read_access_depts.exists or board.read_access_ranks.exists %}
+                                            <span class="badge bg-secondary">일부 제한</span>
+                                        {% else %}
+                                            <span class="badge bg-success">전체 공개</span>
+                                        {% endif %}
                                     </td>
-                                    <td class="text-center text-muted small">
-                                        {{ board.created_at|date:"Y.m.d" }}
+                                    <td>
+                                        {% if board.write_access_depts.exists or board.write_access_ranks.exists %}
+                                            <span class="badge bg-secondary">일부 제한</span>
+                                        {% else %}
+                                            <span class="badge bg-success">전체 허용</span>
+                                        {% endif %}
                                     </td>
                                     <td class="text-center">
                                         <button class="btn btn-sm btn-outline-secondary">수정</button>
@@ -90,8 +119,7 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center py-5 text-muted">
-                                        <i class="bi bi-journal-x display-6 d-block mb-3"></i>
+                                    <td colspan="4" class="text-center py-5 text-muted">
                                         생성된 게시판이 없습니다.
                                     </td>
                                 </tr>
@@ -104,4 +132,11 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* 체크박스 가로 정렬을 위한 간단한 스타일 */
+    ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+    li { margin-right: 10px; }
+    label { margin-left: 5px; cursor: pointer; }
+</style>
 {% endblock %}
