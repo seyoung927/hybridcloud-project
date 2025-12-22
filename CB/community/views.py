@@ -229,7 +229,7 @@ def all_posts(request):
     # 2. 검색어 처리 (제목 or 내용)
     q = request.GET.get('q', '')
     if q:
-        posts = posts.filter(Q(title__icontains=q) | Q(content__icontains=q))
+        posts = posts.filter(Q(title__icontains=q) | Q(content__icontains=q))        
 
     # 3. 페이징 처리 (15개씩)
     paginator = Paginator(posts, 15)
@@ -240,6 +240,8 @@ def all_posts(request):
         'page_obj': page_obj,
         'query': q,
     })
+
+from .forms import BoardCreationForm
 
 @login_required
 def manage_boards(request):
