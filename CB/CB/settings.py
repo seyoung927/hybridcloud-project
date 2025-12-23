@@ -247,7 +247,7 @@ STORAGES = {
     # 이 설정이 else 안에 있어야 collectstatic이 S3 버킷 주소를 목적지로 인식합니다.
 #    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 #    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    
+AWS_S3_CUSTOM_DOMAIN = f"connectfit-s3-bucket.s3.ap-northeast-2.amazonaws.com"
     # S3 전용 URL
-#    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-#    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
