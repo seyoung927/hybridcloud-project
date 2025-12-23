@@ -46,13 +46,13 @@
 
         <ul class="nav flex-column px-2">
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'community:board_list' %}">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'board_list' %}">
                     <i class="bi bi-grid-fill me-3 fs-5"></i> 
                     <span class="fw-medium">대시보드</span>
                 </a>
             </li>
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'community:inbox' %}">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'inbox' %}">
                     <i class="bi bi-envelope-fill me-3 fs-5"></i> 
                     <span class="fw-medium">쪽지함</span>
                     {% if unread_msg_count > 0 %}
@@ -75,7 +75,7 @@
         </h6>
         <ul class="nav flex-column px-2 mb-2">
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'community:all_posts' %}">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'all_posts' %}">
                     <i class="bi bi-card-list me-3"></i>
                     전체 글 보기
                 </a>
