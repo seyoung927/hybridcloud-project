@@ -88,14 +88,16 @@ WSGI_APPLICATION = 'CB.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 # 1. AWS 공통 설정 (블록 밖으로 빼는 것이 안전합니다)
+
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_REGION_NAME = 'ap-northeast-2'
 AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_REGION_NAME}.amazonaws.com'
 AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
-AWS_DEFAULT_ACL = 'public-read'
-
+#AWS_DEFAULT_ACL = 'public-read'
+AWS_DEFAULT_ACL = None  # public-read 대신 None으로 설정
+AWS_S3_VERIFY = True
 
 
 
@@ -182,6 +184,7 @@ SUMMERNOTE_CONFIG = {
 
 
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # 2. 미디어 파일 (Media) -> S3로 가라!
 MEDIA_LOCATION = 'media' # S3 내 media 폴더 경로
@@ -199,7 +202,6 @@ if os.environ.get('DEV') == 'True':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
 
     # 로컬용 URL
     STATIC_URL = '/static/'
@@ -226,7 +228,7 @@ else:
             'OPTIONS': {'charset': 'utf8mb4'},
         }
     }
-    STATIC_ROOT = None
+
 
     # ★ 핵심: S3 저장소 백엔드 활성화
     # 이 설정이 else 안에 있어야 collectstatic이 S3 버킷 주소를 목적지로 인식합니다.
