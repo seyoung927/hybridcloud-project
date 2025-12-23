@@ -117,3 +117,20 @@ class Comment(models.Model):
     def __str__(self):
         return f"{self.author}님의 댓글"
 
+# 4. 알림 (Notification) - 사내 메신저 역할
+class Notification(models.Model):
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    
+    message = models.CharField(max_length=255) # 예: "부장님이 공지사항을 등록했습니다."
+    link = models.URLField(blank=True, null=True) # 클릭하면 해당 글로 이동
+    
+    is_read = models.BooleanField(default=False) # 읽음 여부 (빨간 점 표시용)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.recipient}에게: {self.message}"
+
