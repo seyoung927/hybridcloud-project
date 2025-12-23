@@ -79,21 +79,12 @@ TEMPLATES = [
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_REGION_NAME = 'ap-northeast-2'
-
-# S3 버킷 이름
 AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
-
-# S3 도메인 (변수로 처리해서 유지보수 쉽게 변경)
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+AWS_DEFAULT_ACL = 'public-read'
 
 WSGI_APPLICATION = 'CB.wsgi.application'
-
-AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
-}
-
-# [주의] AWS 콘솔에서 버킷의 "퍼블릭 액세스 차단"을 껐는지 꼭 확인하세요!
-AWS_DEFAULT_ACL = 'public-read'
 
 # ------------------------------------------------------------
 # [핵심 수정] 정적 파일과 미디어 파일을 구분해서 저장하는 설정
@@ -101,14 +92,11 @@ AWS_DEFAULT_ACL = 'public-read'
 
 # 1. 정적 파일 (Static)
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-# 아까 만든 custom_storages.py의 StaticStorage 클래스를 사용
-STATICFILES_STORAGE = 'CB.custom_storages.StaticStorage' 
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-# 2. 미디어 파일 (Media)
+# 2. 미디어 파일 (Media) -> S3로 가라!
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-# 아까 만든 custom_storages.py의 MediaStorage 클래스를 사용
-DEFAULT_FILE_STORAGE = 'CB.custom_storages.MediaStorage'
-
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
