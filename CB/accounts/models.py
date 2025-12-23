@@ -2,8 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import datetime
+from django.contrib.auth.signals import user_logged_out
 from django.dispatch import receiver
-
 # 1. 직급을 관리하는 별도 테이블 (관리자가 추가 가능)
 class Rank(models.Model):
     name = models.CharField(max_length=20, unique=True) # 예: 사원, 대리
