@@ -1,5 +1,5 @@
 from django import forms
-from .models import Board, Post, Message
+from .models import Board
 from django_summernote.widgets import SummernoteWidget
 
 class BoardCreationForm(forms.ModelForm):
@@ -34,36 +34,3 @@ class BoardCreationForm(forms.ModelForm):
             'write_access_ranks': '쓰기 허용 직급 (선택 안 하면 전체)',
         }
 
-# 1. 게시글 작성 폼
-class PostForm(forms.ModelForm):
-    class Meta:
-        model = Post
-        # 사용자에게 입력받을 항목들
-        fields = ['title', 'content', 'file'] 
-        
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '제목을 입력하세요'}),
-            # 👇 [핵심] 본문에 썸머노트 에디터 적용
-            'content': SummernoteWidget(attrs={'summernote': {'width': '100%', 'height': '400px'}}),
-            'file': forms.FileInput(attrs={'class': 'form-control'}),
-        }
-        labels = {
-            'title': '제목',
-            'content': '내용',
-            'file': '첨부파일',
-        }
-
-# 2. 쪽지 작성 폼
-class MessageForm(forms.ModelForm):
-    class Meta:
-        model = Message
-        # 받는 사람은 URL로 자동 지정하거나 검색할 거라 폼에서는 뺄 수도 있지만, 일단 둡니다.
-        fields = ['recipient', 'title', 'content', 'file']
-        
-        widgets = {
-            'recipient': forms.Select(attrs={'class': 'form-select'}),
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '쪽지 제목'}),
-            # 👇 [핵심] 여기도 에디터 적용
-            'content': SummernoteWidget(attrs={'summernote': {'width': '100%', 'height': '300px'}}),
-            'file': forms.FileInput(attrs={'class': 'form-control'}),
-        }
