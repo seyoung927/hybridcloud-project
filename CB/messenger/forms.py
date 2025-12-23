@@ -1,5 +1,5 @@
 from django import forms
-from .models import Message  # ⭐ 쪽지 모델 가져오기
+from .models import Message  # ⭐ 쪽지 모델
 from django_summernote.widgets import SummernoteWidget
 
 class MessageForm(forms.ModelForm):
@@ -10,7 +10,6 @@ class MessageForm(forms.ModelForm):
         widgets = {
             'recipient': forms.Select(attrs={
                 'class': 'form-select', 
-                'placeholder': '받는 사람을 선택하세요'
             }),
             'title': forms.TextInput(attrs={
                 'class': 'form-control', 
