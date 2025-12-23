@@ -68,6 +68,7 @@ def view_message(request, message_id):
     return render(request, 'community/view_message.html', {'message': message})
 
 from django.contrib import messages
+from django.db.models import Count, Q
 from .models import Board, Post
 
 # 4. 게시판 목록 (Board List)
