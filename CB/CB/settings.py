@@ -181,6 +181,7 @@ MEDIA_URL = '/media/'
 # ROOT는 실제 파일이 저장되는 서버 경로
 MEDIA_ROOT = BASE_DIR / 'media'
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'  # 👈 이게 없으면 에디터가 화면에 안 뜰 수 있습니다.
 
 SUMMERNOTE_THEME = 'bs5'  # 부트스트랩 5 테마 사용
 

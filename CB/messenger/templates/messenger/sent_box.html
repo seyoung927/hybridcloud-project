@@ -19,26 +19,25 @@
             <thead class="table-light">
                 <tr>
                     <th width="15%">받은 사람</th>
-                    <th>내용</th>
+                    <th>제목</th>
                     <th width="15%">보낸 날짜</th>
-                    <th width="15%">수신 확인</th>
+                    <th width="15%">상태</th>
                 </tr>
             </thead>
             <tbody>
                 {% for msg in messages_list %}
                 <tr style="cursor: pointer;" onclick="location.href='{% url 'view_message' msg.id %}'">
                     <td>
-                        {{ msg.receiver.nickname }}
-                        <small class="text-muted d-block">{{ msg.receiver.department.name }}</small>
+                        {{ msg.recipient.nickname }}
+                        <small class="text-muted d-block">{{ msg.recipient.department.name }}</small>
                     </td>
                     <td>
-                        {{ msg.content|truncatechars:30 }}
+                        {{ msg.title }}
                     </td>
                     <td class="text-muted small">{{ msg.created_at|date:"Y-m-d H:i" }}</td>
                     <td>
                         {% if msg.is_read %}
                             <span class="badge bg-secondary">읽음</span>
-                            <small class="text-muted d-block" style="font-size: 0.7em;">{{ msg.is_read|date:"m-d H:i" }}</small>
                         {% else %}
                             <span class="badge bg-warning text-dark">읽지 않음</span>
                         {% endif %}
