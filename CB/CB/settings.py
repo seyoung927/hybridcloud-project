@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'community',
     'messenger',
     'django_summernote',
+    'django_storages',
 ]
 
 MIDDLEWARE = [
@@ -75,7 +76,27 @@ TEMPLATES = [
     },
 ]
 
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID') 
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_REGION_NAME = 'ap-northeast-2'
+AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket' # 아까 만든 버킷 이름
+AWS_S3_CUSTOM_DOMAIN = f'connectfit-s3-bucket.s3.amazonaws.com'
+
+
 WSGI_APPLICATION = 'CB.wsgi.application'
+
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_DEFAULT_ACL = 'public-read' # 파일을 올리면 누구나 볼 수 있게 함
+
+# 4. 정적 파일(Static)을 S3로 보내는 설정
+STATIC_URL = f'https://connectfit-s3-bucket.s3.amazonaws.com/static/'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# 5. 미디어 파일(Media)을 S3로 보내는 설정 (썸머노트 이미지 업로드용)
+MEDIA_URL = f'https://connectfit-s3-bucket.s3.amazonaws.com/media/'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
 # Database
@@ -149,7 +170,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -170,15 +190,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# 2. 배포할 때 모이는 위치 (Nginx가 바라볼 곳)
+# (참고) S3를 쓰면 STATIC_ROOT는 사실상 안 쓰이지만, 에러 방지용으로 둡니다.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-
-# 3. 미디어 파일 (유저 업로드) 설정
-# URL은 웹에서 접근하는 주소
-MEDIA_URL = '/media/'
-
-# ROOT는 실제 파일이 저장되는 서버 경로
 MEDIA_ROOT = BASE_DIR / 'media'
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'  # 👈 이게 없으면 에디터가 화면에 안 뜰 수 있습니다.
