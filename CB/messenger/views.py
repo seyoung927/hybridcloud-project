@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
-from .models import Message
+from .models import Message, Notification
 from .forms import MessageForm
 
 # 1. 받은 쪽지함 (Inbox)
