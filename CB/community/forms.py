@@ -1,5 +1,5 @@
 from django import forms
-from .models import Board
+from .models import Board, Post
 from django_summernote.widgets import SummernoteWidget
 
 class BoardCreationForm(forms.ModelForm):
@@ -34,3 +34,26 @@ class BoardCreationForm(forms.ModelForm):
             'write_access_ranks': '쓰기 허용 직급 (선택 안 하면 전체)',
         }
 
+# 1. 게시글 작성 폼
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'content', 'file']
+        
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': '제목을 입력하세요'
+            }),
+            'content': SummernoteWidget(attrs={
+                'summernote': {'width': '100%', 'height': '400px'}
+            }),
+            'file': forms.FileInput(attrs={
+                'class': 'form-control'
+            }),
+        }
+        labels = {
+            'title': '제목',
+            'content': '내용',
+            'file': '첨부파일',
+        }

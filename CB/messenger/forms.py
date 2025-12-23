@@ -1,6 +1,5 @@
 from django import forms
-# 👇 [중요] 여기서는 오직 Message 모델만 가져옵니다. (Board, Post 삭제)
-from .models import Message
+from .models import Message  # ⭐ 쪽지 모델 가져오기
 from django_summernote.widgets import SummernoteWidget
 
 class MessageForm(forms.ModelForm):
@@ -8,7 +7,6 @@ class MessageForm(forms.ModelForm):
         model = Message
         fields = ['recipient', 'title', 'content', 'file']
         
-        # ⭐ 입력창 디자인 (부트스트랩) & 에디터 적용
         widgets = {
             'recipient': forms.Select(attrs={
                 'class': 'form-select', 
@@ -25,7 +23,6 @@ class MessageForm(forms.ModelForm):
                 'class': 'form-control'
             }),
         }
-        
         labels = {
             'recipient': '받는 사람',
             'title': '제목',

@@ -6,8 +6,8 @@ from .models import Message, Notification
 import re 
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
-from .models import Post
 from .forms import PostForm  # 👈 forms.py에서 만든 폼 가져오기
+from .models import Board, Post, Message, Notification
 
 User = get_user_model()
 
@@ -19,35 +19,6 @@ def inbox(request):
     return render(request, 'community/inbox.html', {'messages': messages})
 
 # 2. 쪽지 보내기 (Send)
-@login_required
-def send_message(request):
-    # GET 파라미터로 받는 사람 지정된 경우 (?to=3) 처리
-    recipient_id = request.GET.get('to')
-    initial_data = {}
-    if recipient_id:
-        initial_data['recipient'] = recipient_id
-
-    if request.method == 'POST':
-        # ★ [핵심] 여기도 폼 사용 & FILES 포함
-        form = MessageForm(request.POST, request.FILES)
-        if form.is_valid():
-            msg = form.save(commit=False)
-            msg.sender = request.user # 보낸 사람은 나
-            msg.save()
-            
-            # 🔔 알림 생성 (Notification)
-            Notification.objects.create(
-                recipient=msg.recipient, # 폼에서 선택한 받는 사람
-                sender=request.user,
-                message=f"📩 {request.user.nickname}님이 쪽지를 보냈습니다: {msg.title}",
-                link="/community/inbox/"
-            )
-            
-            messages.success(request, "쪽지를 전송했습니다.")
-            return redirect('community:inbox')
-    else:
-        # 받는 사람이 지정되어 있다면 미리 선택된 상태로 폼 생성
-        form = MessageForm(initial=initial_data)
 
     return render(request, 'community/send_message.html', {'form': form})
 # 3. 쪽지 상세 보기 (읽음 처리)

@@ -15,18 +15,33 @@ def inbox(request):
 # 2. 쪽지 보내기
 @login_required
 def send_message(request):
+    # GET 파라미터로 받는 사람 지정된 경우 (?to=3) 처리
+    recipient_id = request.GET.get('to')
+    initial_data = {}
+    if recipient_id:
+        initial_data['recipient'] = recipient_id
+
     if request.method == 'POST':
-        form = MessageForm(request.POST, user=request.user)
+        # ★ [핵심] 여기도 폼 사용 & FILES 포함
+        form = MessageForm(request.POST, request.FILES)
         if form.is_valid():
             msg = form.save(commit=False)
-            msg.sender = request.user
+            msg.sender = request.user # 보낸 사람은 나
             msg.save()
-            messages.success(request, "쪽지를 성공적으로 보냈습니다.")
-            return redirect('inbox')
+            
+            # 🔔 알림 생성 (Notification)
+            Notification.objects.create(
+                recipient=msg.recipient, # 폼에서 선택한 받는 사람
+                sender=request.user,
+                message=f"📩 {request.user.nickname}님이 쪽지를 보냈습니다: {msg.title}",
+                link="/community/inbox/"
+            )
+            
+            messages.success(request, "쪽지를 전송했습니다.")
+            return redirect('community:inbox')
     else:
-        form = MessageForm(user=request.user)
-    
-    return render(request, 'messenger/send_message.html', {'form': form})
+        # 받는 사람이 지정되어 있다면 미리 선택된 상태로 폼 생성
+        form = MessageForm(initial=initial_data)
 
 # 3. 쪽지 읽기 (클릭 시 읽음 처리)
 @login_required
