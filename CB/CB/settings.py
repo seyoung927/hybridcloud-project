@@ -76,28 +76,38 @@ TEMPLATES = [
     },
 ]
 
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID') 
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_REGION_NAME = 'ap-northeast-2'
-AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket' # 아까 만든 버킷 이름
-AWS_S3_CUSTOM_DOMAIN = f'connectfit-s3-bucket.s3.amazonaws.com'
 
+# S3 버킷 이름
+AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
+
+# S3 도메인 (변수로 처리해서 유지보수 쉽게 변경)
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 
 WSGI_APPLICATION = 'CB.wsgi.application'
 
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
-AWS_DEFAULT_ACL = 'public-read' # 파일을 올리면 누구나 볼 수 있게 함
 
-# 4. 정적 파일(Static)을 S3로 보내는 설정
-STATIC_URL = f'https://connectfit-s3-bucket.s3.amazonaws.com/static/'
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# [주의] AWS 콘솔에서 버킷의 "퍼블릭 액세스 차단"을 껐는지 꼭 확인하세요!
+AWS_DEFAULT_ACL = 'public-read'
 
-# 5. 미디어 파일(Media)을 S3로 보내는 설정 (썸머노트 이미지 업로드용)
-MEDIA_URL = f'https://connectfit-s3-bucket.s3.amazonaws.com/media/'
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# ------------------------------------------------------------
+# [핵심 수정] 정적 파일과 미디어 파일을 구분해서 저장하는 설정
+# ------------------------------------------------------------
 
+# 1. 정적 파일 (Static)
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+# 아까 만든 custom_storages.py의 StaticStorage 클래스를 사용
+STATICFILES_STORAGE = 'CB.custom_storages.StaticStorage' 
+
+# 2. 미디어 파일 (Media)
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+# 아까 만든 custom_storages.py의 MediaStorage 클래스를 사용
+DEFAULT_FILE_STORAGE = 'CB.custom_storages.MediaStorage'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -119,7 +129,7 @@ else:
     print("🚀 현재 모드: AWS 배포 (MySQL/RDS)")
     DEBUG = False
     # 서버 IP나 도메인을 꼭 넣어야 함 (보안 에러 방지)
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '여기에_EC2_퍼블릭IP'] 
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'connectFit-ALB-488918938.ap-northeast-2.elb.amazonaws.com'] 
 
     DATABASES = {
         'default': {
@@ -133,7 +143,6 @@ else:
             'OPTIONS': {'charset': 'utf8mb4'},
         }
     }
-ALLOWED_HOSTS = ['*']
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key')
 # Password validation
