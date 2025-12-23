@@ -7,7 +7,7 @@
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white p-4 border-bottom">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge bg-secondary opacity-75">{{ post.board.name }}</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-3">{{ post.board.name }}</span>
                     <small class="text-muted">{{ post.created_at|date:"Y-m-d H:i" }}</small>
                 </div>
                 
@@ -22,13 +22,13 @@
                         {% endif %}
                         
                         <div style="line-height: 1.2;">
-                            <span class="fw-bold d-block">{{ post.author.nickname }}</span>
+                            <span class="fw-bold d-block text-dark">{{ post.author.nickname }}</span>
                             <small class="text-muted">{{ post.author.department.name }} {{ post.author.rank.name }}</small>
                         </div>
                     </div>
                     
                     <div class="text-muted small">
-                        <i class="bi bi-eye"></i> {{ post.hits|default:"0" }}
+                        <span class="me-3"><i class="bi bi-eye me-1"></i> {{ post.view_count|default:"0" }}</span>
                     </div>
                 </div>
             </div>
@@ -40,77 +40,85 @@
                         <div class="overflow-hidden">
                             <h6 class="mb-0 fw-bold text-dark">첨부파일</h6>
                             <a href="{{ post.file.url }}" class="text-decoration-none small text-truncate d-block" download>
-                                {{ post.file.name }} (다운로드)
-                            </a>
+                                {{ post.file.name|slice:"14:" }} (다운로드) </a>
                         </div>
                     </div>
                 {% endif %}
 
-                <div class="post-content" style="min-height: 200px; line-height: 1.8;">
-                    {{ post.content|linebreaks }}
+                <div class="post-content mb-5" style="min-height: 200px; line-height: 1.8;">
+                    {{ post.content|safe }}
                 </div>
             </div>
 
             <div class="card-footer bg-white p-4 d-flex justify-content-between align-items-center">
-                <a href="{% url 'post_list' post.board.slug %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-list"></i> 목록으로
+                <a href="{% url 'post_list' post.board.slug %}" class="btn btn-light px-4">
+                    <i class="bi bi-arrow-left me-1"></i> 목록으로
                 </a>
 
                 {% if user == post.author or user.is_superuser %}
                     <div class="btn-group">
-                        <a href="{% url 'post_delete' post.id %}" class="btn-outline-orange" onclick="return confirm('정말 삭제하시겠습니까? 복구할 수 없습니다.');">
-                            <i class="bi bi-trash"></i> 삭제
+                        <a href="{% url 'post_delete' post.id %}" class="btn btn-outline-danger" onclick="return confirm('정말 삭제하시겠습니까?');">
+                            <i class="bi bi-trash me-1"></i> 삭제
                         </a>
                     </div>
                 {% endif %}
             </div>
         </div>
 
-
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-light fw-bold py-3">
-                <i class="bi bi-chat-dots-fill me-2"></i>댓글 <span class="text-primary">{{ post.comments.count }}</span>
+        <div class="card border-0 shadow-sm mb-5">
+            <div class="card-header bg-white fw-bold py-3 border-bottom">
+                <i class="bi bi-chat-dots text-primary me-2"></i>댓글 <span class="text-primary">{{ post.comments.count }}</span>
             </div>
             
-            <div class="card-body">
+            <div class="card-body p-4">
                 <ul class="list-unstyled mb-4">
                     {% for comment in post.comments.all %}
-                        <li class="mb-3 pb-3 border-bottom">
-                            <div class="d-flex justify-content-between">
-                                <strong class="text-dark">
-                                    {{ comment.author.nickname }} 
+                        <li class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="fw-bold text-dark">{{ comment.author.nickname }}</span>
                                     {% if comment.author.department %}
-                                    <span class="text-muted fw-normal small">({{ comment.author.department.name }})</span>
+                                        <span class="badge bg-light text-muted fw-normal ms-1">{{ comment.author.department.name }}</span>
                                     {% endif %}
-                                </strong>
+                                </div>
                                 <small class="text-muted">{{ comment.created_at|date:"m-d H:i" }}</small>
                             </div>
                             
-                            <p class="mt-1 mb-1 text-secondary">{{ comment.content|linebreaksbr }}</p>
+                            <p class="mb-2 text-secondary" style="white-space: pre-wrap;">{{ comment.content }}</p>
                             
                             {% if user == comment.author or user.is_superuser %}
                                 <div class="text-end">
-                                    <a href="{% url 'comment_delete' comment.id %}" class="text-orange small text-decoration-none" onclick="return confirm('댓글을 삭제할까요?')">
+                                    <a href="{% url 'comment_delete' comment.id %}" class="text-danger small text-decoration-none" onclick="return confirm('댓글을 삭제할까요?')">
                                         삭제
                                     </a>
                                 </div>
                             {% endif %}
                         </li>
                     {% empty %}
-                        <li class="text-center text-muted py-3">아직 작성된 댓글이 없습니다.</li>
+                        <li class="text-center text-muted py-5">
+                            <i class="bi bi-chat-left-text fs-1 d-block mb-3 opacity-25"></i>
+                            첫 댓글을 남겨보세요!
+                        </li>
                     {% endfor %}
                 </ul>
 
-                <form action="{% url 'comment_create' post.id %}" method="POST" class="d-flex gap-2">
+                <form action="{% url 'comment_create' post.id %}" method="POST" class="bg-light p-3 rounded shadow-sm">
                     {% csrf_token %}
-                    <div class="flex-grow-1">
-                        <textarea name="content" class="form-control" rows="2" placeholder="댓글을 입력하세요 (@멘션 가능)" required></textarea>
+                    <div class="d-flex gap-2">
+                        <textarea name="content" class="form-control border-0 shadow-none" rows="2" placeholder="댓글을 입력하세요 (@멘션 가능)" style="resize: none;" required></textarea>
+                        <button type="submit" class="btn btn-primary px-4">등록</button>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width: 80px;">등록</button>
                 </form>
             </div>
         </div>
 
     </div>
 </div>
+
+<style>
+    .post-content img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+</style>
 {% endblock %}
