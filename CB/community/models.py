@@ -138,14 +138,20 @@ class Message(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages')
     
+    # 👇 [추가] 쪽지 제목
+    title = models.CharField(max_length=200, default="제목 없음") 
+    
+    # 👇 [추가] 쪽지 내용 (에디터 쓸 거라 TextField 유지)
     content = models.TextField()
-    is_read = models.BooleanField(default=False) # 읽음 확인
+    
+    # 👇 [추가] 파일 첨부 기능
+    file = models.FileField(upload_to='messages/files/%Y/%m/%d/', blank=True, null=True)
+
+    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at'] # 최신 쪽지부터
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.sender} -> {self.recipient}: {self.content[:10]}..."
-    
-    
+        return f"[{self.title}] {self.sender} -> {self.recipient}"
