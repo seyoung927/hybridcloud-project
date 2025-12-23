@@ -20,4 +20,5 @@ urlpatterns = [
     path('post/<int:post_id>/delete/', views.post_delete, name='post_delete'),
     path('all/', views.all_posts, name='all_posts'),  # 전체 글 보기 경로 추가
     path('manage/', views.manage_boards, name='manage_boards'),
+    path('manage/edit/<int:board_id>/', views.edit_board, name='edit_board'),
 ]

@@ -263,3 +263,29 @@ def manage_boards(request):
         'form': form,
         'boards': boards
     })
+
+@login_required
+def edit_board(request, board_id):
+    # 수정할 게시판 객체를 가져옵니다 (없으면 404 에러)
+    board = get_object_or_404(Board, id=board_id)
+
+    if request.method == 'POST':
+        # 1. 삭제 버튼을 눌렀을 경우
+        if 'delete' in request.POST:
+            board.delete()
+            return redirect('manage_boards') # 삭제 후 목록으로 이동
+
+        # 2. 수정 버튼을 눌렀을 경우
+        # instance=board 를 넣어줘야 "새 글"이 아니라 "기존 글 수정"이 됩니다.
+        form = BoardCreationForm(request.POST, instance=board)
+        if form.is_valid():
+            form.save()
+            return redirect('manage_boards') # 수정 후 목록으로 이동
+    else:
+        # 처음 페이지 들어왔을 때 기존 내용을 채워서 보여줌
+        form = BoardCreationForm(instance=board)
+
+    return render(request, 'community/edit_board.html', {
+        'form': form,
+        'board': board
+    })
