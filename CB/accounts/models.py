@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+import datetime
 
 # 1. 직급을 관리하는 별도 테이블 (관리자가 추가 가능)
 class Rank(models.Model):
@@ -32,6 +34,7 @@ class User(AbstractUser):
     )
     rank = models.ForeignKey(Rank, on_delete=models.SET_NULL, null=True, blank=True)
     profile_image = models.ImageField(upload_to='profiles/%Y/%m/', blank=True, null=True)
+    last_activity = models.DateTimeField(null=True, blank=True)
 
     @property
     def rank_power(self):
@@ -42,4 +45,10 @@ class User(AbstractUser):
         rank = self.rank.name if self.rank else "미정"
         return f"[{dept}/{rank}] {self.username}"
     
+    @property
+    def is_online(self):
+        if self.last_activity:
+            # 현재 시간보다 5분 전(300초)보다 나중이면 접속 중으로 간주
+            return timezone.now() - self.last_activity < datetime.timedelta(minutes=5)
+        return False
     

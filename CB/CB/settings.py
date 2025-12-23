@@ -176,3 +176,12 @@ MEDIA_URL = '/media/'
 
 # ROOT는 실제 파일이 저장되는 서버 경로
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+MIDDLEWARE = [
+    # ... 기존 미들웨어들 ...
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    # 👇 [추가] 방금 만든 미들웨어 (앱이름.파일명.클래스명)
+    'accounts.middleware.UpdateLastActivityMiddleware',
+]
