@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import datetime
+from django.dispatch import receiver
 
 # 1. 직급을 관리하는 별도 테이블 (관리자가 추가 가능)
 class Rank(models.Model):
@@ -24,16 +25,18 @@ class Department(models.Model):
 class User(AbstractUser):
     nickname = models.CharField(max_length=20, blank=True)
     
-    # 부서 연결 (새로 추가됨)
+    # 부서 & 직급
     department = models.ForeignKey(
-        Department, 
+        'Department', # 따옴표로 감싸면 순서 상관없이 참조 가능
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
-        related_name='members'  # ★ 이제부터 'user_set' 대신 'members'로 부릅니다!
+        related_name='members'
     )
-    rank = models.ForeignKey(Rank, on_delete=models.SET_NULL, null=True, blank=True)
+    rank = models.ForeignKey('Rank', on_delete=models.SET_NULL, null=True, blank=True)
     profile_image = models.ImageField(upload_to='profiles/%Y/%m/', blank=True, null=True)
+    
+    # 👇 [추가된 필드]
     last_activity = models.DateTimeField(null=True, blank=True)
 
     @property
@@ -45,10 +48,18 @@ class User(AbstractUser):
         rank = self.rank.name if self.rank else "미정"
         return f"[{dept}/{rank}] {self.username}"
     
+    # 👇 [추가된 기능] 온라인 여부 확인
     @property
     def is_online(self):
         if self.last_activity:
-            # 현재 시간보다 5분 전(300초)보다 나중이면 접속 중으로 간주
             return timezone.now() - self.last_activity < datetime.timedelta(minutes=5)
         return False
-    
+
+@receiver(user_logged_out)
+def remove_online_status_on_logout(sender, request, user, **kwargs):
+    """
+    로그아웃 하는 순간 last_activity를 비워서 즉시 '오프라인'으로 만듭니다.
+    """
+    if user:
+        user.last_activity = None
+        user.save(update_fields=['last_activity'])
