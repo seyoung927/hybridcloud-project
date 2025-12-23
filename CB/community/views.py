@@ -72,17 +72,18 @@ from .models import Board, Post
 
 # 4. 게시판 목록 (Board List)
 def board_list(request):
-    boards = Board.objects.all()
-    
-    # (선택사항) 템플릿에서 권한 체크를 쉽게 하기 위해
-    # 여기서 미리 필터링해서 보낼 수도 있지만, 
-    # 지금은 일단 다 보여주고 클릭 시 튕기게(이미 구현함) 하는 게 구현이 빠릅니다.
+    # [수정 전] boards = Board.objects.all()
+    # 이렇게 하면 그냥 게시판만 가져오고, 글 개수는 HTML에서 샜었죠.
+
+    # [수정 후] 여기서 '살아있는 글' 개수를 미리 계산해서 'post_count'라는 이름표를 붙여줍니다.
+    boards = Board.objects.annotate(
+        post_count=Count('posts', filter=Q(posts__is_active=True))
+    )
     
     context = {
         'boards': boards,
     }
     return render(request, 'community/board_list.html', context)
-
 # 5. 글 목록 (Post List)
 @login_required
 def post_list(request, board_slug):
