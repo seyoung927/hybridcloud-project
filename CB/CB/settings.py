@@ -226,6 +226,7 @@ else:
             'OPTIONS': {'charset': 'utf8mb4'},
         }
     }
+    STATIC_ROOT = None
 
     # ★ 핵심: S3 저장소 백엔드 활성화
     # 이 설정이 else 안에 있어야 collectstatic이 S3 버킷 주소를 목적지로 인식합니다.
