@@ -92,7 +92,7 @@ AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_REGION_NAME = 'ap-northeast-2'
 AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_REGION_NAME}.amazonaws.com'
 AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 AWS_DEFAULT_ACL = 'public-read'
 
@@ -217,12 +217,6 @@ SUMMERNOTE_CONFIG = {
 }
 
 
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_REGION_NAME = 'ap-northeast-2'
-AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
-AWS_DEFAULT_ACL = 'public-read'
-AWS_LOCATION = 'static' # S3 내 static 폴더 경로
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 # 3. URL 설정
@@ -232,6 +226,4 @@ MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 # 2. 미디어 파일 (Media) -> S3로 가라!
 MEDIA_LOCATION = 'media' # S3 내 media 폴더 경로
-
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
