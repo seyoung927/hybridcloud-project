@@ -76,13 +76,6 @@ TEMPLATES = [
     },
 ]
 
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_REGION_NAME = 'ap-northeast-2'
-AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
-AWS_DEFAULT_ACL = 'public-read'
 
 WSGI_APPLICATION = 'CB.wsgi.application'
 
@@ -91,12 +84,6 @@ WSGI_APPLICATION = 'CB.wsgi.application'
 # ------------------------------------------------------------
 
 # 1. 정적 파일 (Static)
-STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-# 2. 미디어 파일 (Media) -> S3로 가라!
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
@@ -188,8 +175,6 @@ STATICFILES_DIRS = [
 ]
 
 # (참고) S3를 쓰면 STATIC_ROOT는 사실상 안 쓰이지만, 에러 방지용으로 둡니다.
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-MEDIA_ROOT = BASE_DIR / 'media'
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'  # 👈 이게 없으면 에디터가 화면에 안 뜰 수 있습니다.
 
@@ -215,3 +200,32 @@ SUMMERNOTE_CONFIG = {
     'attachment_require_authentication': True, # 로그인한 사람만 파일 업로드 가능
     'disable_attachment': False,
 }
+
+
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_REGION_NAME = 'ap-northeast-2'
+AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+AWS_DEFAULT_ACL = 'public-read'
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+}
+
+# 3. URL 설정
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# 2. 미디어 파일 (Media) -> S3로 가라!
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
