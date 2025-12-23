@@ -11,31 +11,7 @@ from .models import Board, Post, Message, Notification
 
 User = get_user_model()
 
-# 1. 받은 쪽지함 (Inbox)
-@login_required
-def inbox(request):
-    # 나에게 온 쪽지를 최신순으로 가져옴
-    messages = request.user.received_messages.all()
-    return render(request, 'community/inbox.html', {'messages': messages})
 
-# 2. 쪽지 보내기 (Send)
-
-    return render(request, 'community/send_message.html', {'form': form})
-# 3. 쪽지 상세 보기 (읽음 처리)
-@login_required
-def view_message(request, message_id):
-    message = get_object_or_404(Message, id=message_id)
-    
-    # 보안 검사: 내 쪽지도 아닌데 남이 보려고 하면 차단
-    if message.recipient != request.user and message.sender != request.user:
-        return HttpResponseForbidden("권한이 없습니다.")
-    
-    # 받은 사람이 읽었을 때만 '읽음 처리'
-    if message.recipient == request.user and not message.is_read:
-        message.is_read = True
-        message.save()
-        
-    return render(request, 'community/view_message.html', {'message': message})
 
 from django.contrib import messages
 from django.db.models import Count, Q
