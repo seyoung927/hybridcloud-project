@@ -36,9 +36,9 @@
                     </td>
                     <td class="text-muted small">{{ msg.created_at|date:"Y-m-d H:i" }}</td>
                     <td>
-                        {% if msg.read_at %}
+                        {% if msg.is_read %}
                             <span class="badge bg-secondary">읽음</span>
-                            <small class="text-muted d-block" style="font-size: 0.7em;">{{ msg.read_at|date:"m-d H:i" }}</small>
+                            <small class="text-muted d-block" style="font-size: 0.7em;">{{ msg.is_read|date:"m-d H:i" }}</small>
                         {% else %}
                             <span class="badge bg-warning text-dark">읽지 않음</span>
                         {% endif %}
