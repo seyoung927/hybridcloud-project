@@ -4,11 +4,6 @@ from . import views
 #app_name = 'community'
 
 urlpatterns = [
-    path('inbox/', views.inbox, name='inbox'),
-    path('send/', views.send_message, name='send_message'),
-    path('message/<int:message_id>/', views.view_message, name='view_message'),
-
-    # ... (기존 쪽지 URL들) ...
     
     # 게시판 관련 URL
     path('', views.board_list, name='board_list'), # /community/ 로 접속 시 게시판 목록
