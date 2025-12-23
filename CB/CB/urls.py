@@ -26,6 +26,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')), # 나중에 로그인용
     path('community/', include('community.urls')), # 방금 만든 커뮤니티 URL 연결
     path('messenger/', include('messenger.urls')),
+    path('summernote/', include('django_summernote.urls')),
 ]
 
 if settings.DEBUG:

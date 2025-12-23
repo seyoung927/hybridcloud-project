@@ -181,3 +181,25 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
+SUMMERNOTE_THEME = 'bs5'  # 부트스트랩 5 테마 사용
+
+SUMMERNOTE_CONFIG = {
+    # 에디터 크기 설정
+    'width': '100%',
+    'height': '400',
+    'lang': 'ko-KR',  # 한국어 설정
+    
+    # 툴바 설정 (필요한 것만 남김)
+    'toolbar': [
+        ['style', ['style']],
+        ['font', ['bold', 'underline', 'clear']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['table', ['table']],
+        ['insert', ['link', 'picture', 'video']], # picture가 사진 넣는 버튼입니다.
+        ['view', ['fullscreen', 'codeview', 'help']],
+    ],
+    # 이미지 업로드 시 서버에 파일로 저장하도록 설정
+    'attachment_require_authentication': True, # 로그인한 사람만 파일 업로드 가능
+    'disable_attachment': False,
+}
