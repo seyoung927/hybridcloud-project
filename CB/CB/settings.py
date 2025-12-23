@@ -99,43 +99,6 @@ AWS_DEFAULT_ACL = 'public-read'
 
 
 
-if os.environ.get('DEV') == 'True':
-    # [로컬 개발 환경]
-    print("📢 현재 모드: 로컬 개발 (SQLite)")
-    DEBUG = True
-    ALLOWED_HOSTS = ['*'] # 개발할 땐 편하게
-    
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    # [AWS 서버 환경]
-    print("🚀 현재 모드: AWS 배포 (MySQL/RDS)")
-    DEBUG = False
-    # 서버 IP나 도메인을 꼭 넣어야 함 (보안 에러 방지)
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'connectFit-ALB-488918938.ap-northeast-2.elb.amazonaws.com'] 
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            # .env에서 실제 값을 가져오도록 수정했습니다
-            'NAME': os.environ.get('DB_NAME'),     
-            'USER': os.environ.get('DB_USER'),
-            'PASSWORD': os.environ.get('DB_PASSWORD'),
-            'HOST': os.environ.get('DB_HOST'),
-            'PORT': os.environ.get('DB_PORT', '3306'),
-            'OPTIONS': {'charset': 'utf8mb4'},
-        }
-    }
-    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    
-    # URL 설정
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key')
 # Password validation
@@ -227,3 +190,51 @@ MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 # 2. 미디어 파일 (Media) -> S3로 가라!
 MEDIA_LOCATION = 'media' # S3 내 media 폴더 경로
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+if os.environ.get('DEV') == 'True':
+    # [로컬 개발 환경]
+    print("📢 현재 모드: 로컬 개발 (SQLite)")
+    DEBUG = True
+    ALLOWED_HOSTS = ['*']
+    
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    
+    # 로컬용 URL
+    STATIC_URL = '/static/'
+    MEDIA_URL = '/media/'
+
+else:
+    # [AWS 서버 환경]
+    print("🚀 현재 모드: AWS 배포 (MySQL/RDS)")
+    DEBUG = False
+    ALLOWED_HOSTS = [
+        '127.0.0.1', 
+        'localhost', 
+        'connectFit-ALB-488918938.ap-northeast-2.elb.amazonaws.com'
+    ]
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME'),     
+            'USER': os.environ.get('DB_USER'),
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': os.environ.get('DB_HOST'),
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {'charset': 'utf8mb4'},
+        }
+    }
+
+    # ★ 핵심: S3 저장소 백엔드 활성화
+    # 이 설정이 else 안에 있어야 collectstatic이 S3 버킷 주소를 목적지로 인식합니다.
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    
+    # S3 전용 URL
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
