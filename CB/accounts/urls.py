@@ -9,7 +9,7 @@ urlpatterns = [
     
     # 2. 로그아웃 (Django 제공 기능 사용)
     # 로그아웃 후에는 다시 로그인 페이지로 튕기게 설정(next_page)
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    
     
     # 3. 회원가입 (우리가 만든 뷰)
     path('signup/', views.signup, name='signup'),

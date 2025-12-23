@@ -19,9 +19,10 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from community import views as community_views
+from . import views
 
 urlpatterns = [
-    path('', community_views.board_list, name='home'),
+    path("", views.landing, name="landing"),  # ✅ 루트 진입    
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')), # 나중에 로그인용
     path('community/', include('community.urls')), # 방금 만든 커뮤니티 URL 연결

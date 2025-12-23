@@ -43,6 +43,7 @@ class Board(models.Model):
         verbose_name="쓰기 허용 직급",
         related_name='write_boards' # ★ 추가
     )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일')
 
     def __str__(self):
         return self.name
@@ -146,3 +147,5 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender} -> {self.recipient}: {self.content[:10]}..."
+    
+    

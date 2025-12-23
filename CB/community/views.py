@@ -229,7 +229,7 @@ def all_posts(request):
     # 2. 검색어 처리 (제목 or 내용)
     q = request.GET.get('q', '')
     if q:
-        posts = posts.filter(Q(title__icontains=q) | Q(content__icontains=q))
+        posts = posts.filter(Q(title__icontains=q) | Q(content__icontains=q))        
 
     # 3. 페이징 처리 (15개씩)
     paginator = Paginator(posts, 15)
@@ -239,4 +239,27 @@ def all_posts(request):
     return render(request, 'community/all_posts.html', {
         'page_obj': page_obj,
         'query': q,
+    })
+
+from .forms import BoardCreationForm
+
+@login_required
+def manage_boards(request):
+    # 관리자만 접근 가능하게 하려면 아래 줄 주석 해제
+    # if not request.user.is_staff: return redirect('home')
+
+    if request.method == 'POST':
+        form = BoardCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('community:manage_boards')  # 생성 후 목록으로 새로고침
+    else:
+        form = BoardCreationForm()
+
+    # 이미 만들어진 게시판 목록도 같이 보여주기
+    boards = Board.objects.all().order_by('-created_at')
+
+    return render(request, 'community/manage_boards.html', {
+        'form': form,
+        'boards': boards
     })
