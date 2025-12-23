@@ -89,15 +89,6 @@ WSGI_APPLICATION = 'CB.wsgi.application'
 
 # 1. AWS 공통 설정 (블록 밖으로 빼는 것이 안전합니다)
 
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_REGION_NAME = 'ap-northeast-2'
-AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_REGION_NAME}.amazonaws.com'
-AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
-#AWS_DEFAULT_ACL = 'public-read'
-AWS_DEFAULT_ACL = None  # public-read 대신 None으로 설정
-AWS_S3_VERIFY = True
 
 
 
@@ -229,12 +220,34 @@ else:
         }
     }
 
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": os.environ.get('AWS_ACCESS_KEY_ID'),
+            "secret_key": os.environ.get('AWS_SECRET_ACCESS_KEY'),
+            "bucket_name": "connectfit-s3-bucket", # 실제 버킷명
+            "region_name": "ap-northeast-2",
+            "default_acl": None, # 최근 S3 보안 정책에 따라 None 권장
+            "querystring_auth": False,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": os.environ.get('AWS_ACCESS_KEY_ID'),
+            "secret_key": os.environ.get('AWS_SECRET_ACCESS_KEY'),
+            "bucket_name": "connectfit-s3-bucket",
+        },
+    },
+}
+
 
     # ★ 핵심: S3 저장소 백엔드 활성화
     # 이 설정이 else 안에 있어야 collectstatic이 S3 버킷 주소를 목적지로 인식합니다.
-    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+#    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+#    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     
     # S3 전용 URL
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+#    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+#    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
