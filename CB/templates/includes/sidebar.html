@@ -1,10 +1,10 @@
 {% load static %}
 <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-white border-end shadow-sm" style="min-height: 100vh; position: sticky; top: 0; align-self: flex-start;">
     
-    <div class="d-flex flex-column h-100 pt-3 overflow-auto">
+    <div class="d-flex flex-column pt-3 h-100 align-items-center">
         
         {% if user.is_authenticated %}
-            <div class="profile-card mx-3 p-3 mb-3 text-center bg-light rounded border">
+            <div class="profile-card mx-3 p-3 mb-3 text-center bg-light rounded border w-100" style="flex-shrink: 0;">
                 
                 {% if user.profile_image %}
                     <img src="{{ user.profile_image.url }}" class="rounded-circle mb-2" width="70" height="70" style="object-fit: cover; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -44,7 +44,7 @@
             </div>
         {% endif %}
 
-        <ul class="nav flex-column px-2">
+        <ul class="nav flex-column px-2 w-100">
             <li class="nav-item mb-1">
                 <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'board_list' %}">
                     <i class="bi bi-grid-fill me-3 fs-5"></i> 
@@ -168,5 +168,18 @@
         background-color: #f8f9fa;
         color: #0d6efd !important;
         transition: 0.2s;
+    }
+    #sidebarMenu img.rounded-circle {
+        aspect-ratio: 1 / 1; /* 가로세로 비율 1:1 고정 */
+        object-fit: cover;
+        flex-shrink: 0; /* 압축이나 늘림 방지 */
+    }
+
+    /* 사이드바 메뉴 아이콘 고정 */
+    #sidebarMenu .bi {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
