@@ -1,6 +1,7 @@
 {% load static %}
-<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-white border-end">
-    <div class="position-sticky pt-3">
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-white border-end" style="height: 100vh;">
+    
+    <div class="d-flex flex-column h-100 pt-3 overflow-auto">
         
         {% if user.is_authenticated %}
             <div class="profile-card mx-3 p-3 mb-3 text-center bg-light rounded border">
@@ -43,26 +44,24 @@
             </div>
         {% endif %}
 
-
         <ul class="nav flex-column px-2">
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'board_list' %}">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'community:board_list' %}">
                     <i class="bi bi-grid-fill me-3 fs-5"></i> 
                     <span class="fw-medium">대시보드</span>
                 </a>
             </li>
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'inbox' %}">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'community:inbox' %}">
                     <i class="bi bi-envelope-fill me-3 fs-5"></i> 
                     <span class="fw-medium">쪽지함</span>
-        
                     {% if unread_msg_count > 0 %}
                         <span class="badge bg-orange rounded-pill ms-auto">{{ unread_msg_count }}</span>
                     {% endif %}
                 </a>
             </li>
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'org_chart' %}">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'accounts:org_chart' %}">
                     <i class="bi bi-diagram-3-fill me-3 fs-5"></i> 
                     <span class="fw-medium">조직도</span>
                 </a>
@@ -76,13 +75,12 @@
         </h6>
         <ul class="nav flex-column px-2 mb-2">
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'all_posts' %}">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'community:all_posts' %}">
                     <i class="bi bi-card-list me-3"></i>
                     전체 글 보기
                 </a>
             </li>
-            </ul>
-
+        </ul>
 
         {% if user.is_superuser %}
             <hr class="my-3 mx-3">
@@ -102,22 +100,22 @@
                 </li>
             </ul>
         {% endif %}
-        <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-info" style="width: 280px; min-height: 100vh;">
-    
-            <div class="mt-auto text-center pt-4 pb-3">
+
+        <div class="mt-auto px-3 pb-4 pt-3 text-center">
+            <div class="bg-white rounded border shadow-sm p-3">
                 <img src="{% static 'img/logo.png' %}" alt="ConnectFit Logo" 
-                    style="max-width: 80%; height: auto; opacity: 0.9;">
+                     style="max-width: 100%; height: auto; opacity: 0.9;">
             </div>
-    </div>
-</nav>
+        </div>
+
+    </div> </nav>
 
 <style>
     .hover-bg-light:hover {
-        background-color: #f8f9fa; /* 배경색: 연한 회색 */
-        color: #0d6efd !important; /* 글자색: 파란색 */
-        transition: 0.2s;          /* 부드럽게 바뀌기 */
+        background-color: #f8f9fa;
+        color: #0d6efd !important;
+        transition: 0.2s;
     }
-    /* 현재 보고 있는 메뉴 강조 */
     .nav-link.active {
         color: #0d6efd;
         background-color: #e7f1ff;
