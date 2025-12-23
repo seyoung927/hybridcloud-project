@@ -92,7 +92,7 @@ def post_list(request, board_slug):
         messages.error(request, "🚫 접근 권한이 없는 게시판입니다.")
         return redirect('board_list')
 
-    posts = board.posts.all().order_by('-created_at')
+    posts = board.posts.filter(is_active=True).order_by('-created_at')
     
     # ▼ [중요] 이 줄이 없으면 HTML이 권한을 몰라서 버튼을 숨겨버립니다!
     can_write_access = board.can_write(request.user)
