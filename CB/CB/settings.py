@@ -211,7 +211,7 @@ AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 AWS_DEFAULT_ACL = 'public-read'
 AWS_LOCATION = 'static' # S3 내 static 폴더 경로
 
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 # 3. URL 설정
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
