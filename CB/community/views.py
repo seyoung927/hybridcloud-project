@@ -7,6 +7,7 @@ import re
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from .models import Post
+from .forms import PostForm  # 👈 forms.py에서 만든 폼 가져오기
 
 User = get_user_model()
 
@@ -20,37 +21,35 @@ def inbox(request):
 # 2. 쪽지 보내기 (Send)
 @login_required
 def send_message(request):
+    # GET 파라미터로 받는 사람 지정된 경우 (?to=3) 처리
+    recipient_id = request.GET.get('to')
+    initial_data = {}
+    if recipient_id:
+        initial_data['recipient'] = recipient_id
+
     if request.method == 'POST':
-        recipient_id = request.POST.get('recipient') # 받는 사람 ID
-        content = request.POST.get('content')
-        
-        try:
-            recipient = User.objects.get(id=recipient_id)
+        # ★ [핵심] 여기도 폼 사용 & FILES 포함
+        form = MessageForm(request.POST, request.FILES)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.sender = request.user # 보낸 사람은 나
+            msg.save()
             
-            # 쪽지 저장
-            Message.objects.create(
-                sender=request.user,
-                recipient=recipient,
-                content=content
-            )
-            
-            # (선택) 쪽지 받았다고 알림(Notification)도 하나 꽂아줄까요?
+            # 🔔 알림 생성 (Notification)
             Notification.objects.create(
-                recipient=recipient,
+                recipient=msg.recipient, # 폼에서 선택한 받는 사람
                 sender=request.user,
-                message=f"📩 {request.user.nickname}님이 쪽지를 보냈습니다.",
+                message=f"📩 {request.user.nickname}님이 쪽지를 보냈습니다: {msg.title}",
                 link="/community/inbox/"
             )
             
-            return redirect('inbox') # 보낸 후 내 쪽지함으로 이동
-            
-        except User.DoesNotExist:
-            return HttpResponseForbidden("존재하지 않는 사용자입니다.")
-            
-    # GET 요청이면: 쪽지 쓰는 화면(유저 목록 포함) 보여주기
-    users = User.objects.exclude(id=request.user.id) # 나 빼고 전체 유저 목록
-    return render(request, 'community/send_message.html', {'users': users})
+            messages.success(request, "쪽지를 전송했습니다.")
+            return redirect('community:inbox')
+    else:
+        # 받는 사람이 지정되어 있다면 미리 선택된 상태로 폼 생성
+        form = MessageForm(initial=initial_data)
 
+    return render(request, 'community/send_message.html', {'form': form})
 # 3. 쪽지 상세 보기 (읽음 처리)
 @login_required
 def view_message(request, message_id):
@@ -110,27 +109,27 @@ def post_list(request, board_slug):
 def post_create(request, board_slug):
     board = get_object_or_404(Board, slug=board_slug)
     
-    # ★ 바뀐 쓰기 권한 체크 로직
+    # 권한 체크
     if not board.can_write(request.user):
         messages.error(request, "🚫 이 게시판에 글을 쓸 권한이 없습니다.")
-        return redirect('post_list', board_slug=board.slug)
+        return redirect('community:post_list', board_slug=board.slug)
 
     if request.method == 'POST':
-        title = request.POST.get('title')
-        content = request.POST.get('content')
-        file = request.FILES.get('file') # 파일 업로드 처리
-        
-        Post.objects.create(
-            board=board,
-            author=request.user,
-            title=title,
-            content=content,
-            file=file
-        )
-        return redirect('post_list', board_slug=board.slug)
+        # ★ [핵심] request.FILES를 꼭 넣어야 사진/파일이 올라갑니다.
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.board = board       # 어느 게시판인지 연결
+            post.author = request.user # 작성자 연결
+            post.save()
+            return redirect('community:post_list', board_slug=board.slug)
+    else:
+        form = PostForm()
 
-    return render(request, 'community/post_create.html', {'board': board})
-    
+    return render(request, 'community/post_create.html', {
+        'board': board,
+        'form': form # 템플릿으로 폼 넘겨주기
+    })    
 # 7. 글 상세 보기
 @login_required
 def post_detail(request, post_id):
