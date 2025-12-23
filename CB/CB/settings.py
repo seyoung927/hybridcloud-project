@@ -50,6 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.UpdateLastActivityMiddleware',
+
 ]
 
 ROOT_URLCONF = 'CB.urls'
@@ -179,10 +181,3 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-MIDDLEWARE = [
-    # ... 기존 미들웨어들 ...
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
-    # 👇 [추가] 방금 만든 미들웨어 (앱이름.파일명.클래스명)
-    'accounts.middleware.UpdateLastActivityMiddleware',
-]
