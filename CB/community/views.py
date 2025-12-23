@@ -252,7 +252,7 @@ def manage_boards(request):
         form = BoardCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('community:manage_boards')  # 생성 후 목록으로 새로고침
+            return redirect('manage_boards')  # 생성 후 목록으로 새로고침
     else:
         form = BoardCreationForm()
 
