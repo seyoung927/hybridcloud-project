@@ -87,6 +87,18 @@ WSGI_APPLICATION = 'CB.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# 1. AWS 공통 설정 (블록 밖으로 빼는 것이 안전합니다)
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_REGION_NAME = 'ap-northeast-2'
+AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+AWS_DEFAULT_ACL = 'public-read'
+
+
+
+
 if os.environ.get('DEV') == 'True':
     # [로컬 개발 환경]
     print("📢 현재 모드: 로컬 개발 (SQLite)")
@@ -118,6 +130,12 @@ else:
             'OPTIONS': {'charset': 'utf8mb4'},
         }
     }
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    
+    # URL 설정
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key')
 # Password validation
@@ -169,10 +187,7 @@ LOGIN_REDIRECT_URL = '/community/'
 # 로그아웃 시 이동할 URL (로그인 페이지)
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
-# 1. 개발할 때 쓰는 정적 파일 위치
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+
 
 # (참고) S3를 쓰면 STATIC_ROOT는 사실상 안 쓰이지만, 에러 방지용으로 둡니다.
 
@@ -205,8 +220,6 @@ SUMMERNOTE_CONFIG = {
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_REGION_NAME = 'ap-northeast-2'
-AWS_STORAGE_BUCKET_NAME = 'connectfit-s3-bucket'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 AWS_DEFAULT_ACL = 'public-read'
 AWS_LOCATION = 'static' # S3 내 static 폴더 경로
@@ -216,10 +229,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
-STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-STATICFILES_STORAGE = 'custom_storages.StaticStorage'
 
 # 2. 미디어 파일 (Media) -> S3로 가라!
 MEDIA_LOCATION = 'media' # S3 내 media 폴더 경로
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIA_LOCATION}/'
-DEFAULT_FILE_STORAGE = 'custom_storages.MediaStorage'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
