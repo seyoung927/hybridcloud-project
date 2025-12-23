@@ -181,7 +181,6 @@ SUMMERNOTE_CONFIG = {
 
 
 
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # 2. 미디어 파일 (Media) -> S3로 가라!
@@ -200,7 +199,8 @@ if os.environ.get('DEV') == 'True':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
+
     # 로컬용 URL
     STATIC_URL = '/static/'
     MEDIA_URL = '/media/'
