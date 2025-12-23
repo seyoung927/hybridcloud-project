@@ -1,5 +1,5 @@
 {% load static %}
-<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-white border-end" style="height: 100vh;">
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-white border-end shadow-sm" style="min-height: 100vh; position: sticky; top: 0; align-self: flex-start;">
     
     <div class="d-flex flex-column h-100 pt-3 overflow-auto">
         
@@ -151,5 +151,22 @@
     .nav-link.active {
         color: #0d6efd;
         background-color: #e7f1ff;
+    }
+    .sidebar {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    /* 스크롤 시 내부 요소가 부드럽게 보이도록 설정 */
+    #sidebarMenu .d-flex {
+        height: 100%;
+        min-height: 100vh;
+    }
+
+    /* 호버 효과 유지 */
+    .hover-bg-light:hover {
+        background-color: #f8f9fa;
+        color: #0d6efd !important;
+        transition: 0.2s;
     }
 </style>
