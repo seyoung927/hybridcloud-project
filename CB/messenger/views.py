@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
-from .models import Message, Notification
+from .models import Message
 from .forms import MessageForm
+from community.models import Notification # 👈 옆동네 알림 모델 빌려오기 (필수!)
 
 # 1. 받은 쪽지함 (Inbox)
 @login_required
