@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'community',
     'messenger',
     'django_summernote',
-    'django_storages',
+    'storages',
 ]
 
 MIDDLEWARE = [
