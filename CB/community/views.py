@@ -55,28 +55,24 @@ def post_list(request, board_slug):
 def post_create(request, board_slug):
     board = get_object_or_404(Board, slug=board_slug)
     
-    # 권한 체크
     if not board.can_write(request.user):
-        messages.error(request, "🚫 이 게시판에 글을 쓸 권한이 없습니다.")
-        return redirect('community:post_list', board_slug=board.slug)
+        messages.error(request, "🚫 권한이 없습니다.")
+        # [수정] 'community:post_list' -> 'post_list'
+        return redirect('post_list', board_slug=board.slug) 
 
     if request.method == 'POST':
-        # ★ [핵심] request.FILES를 꼭 넣어야 사진/파일이 올라갑니다.
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
-            post.board = board       # 어느 게시판인지 연결
-            post.author = request.user # 작성자 연결
+            post.board = board
+            post.author = request.user
             post.save()
-            return redirect('community:post_list', board_slug=board.slug)
+            # [수정] 'community:post_list' -> 'post_list'
+            return redirect('post_list', board_slug=board.slug)
     else:
         form = PostForm()
 
-    return render(request, 'community/post_create.html', {
-        'board': board,
-        'form': form # 템플릿으로 폼 넘겨주기
-    })    
-# 7. 글 상세 보기
+    return render(request, 'community/post_create.html', {'board': board, 'form': form})# 7. 글 상세 보기
 @login_required
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)

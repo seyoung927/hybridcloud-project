@@ -42,13 +42,26 @@ class PostForm(forms.ModelForm):
         
         widgets = {
             'title': forms.TextInput(attrs={
-                'class': 'form-control', 
+                'class': 'form-control form-control-lg', # 제목은 크게 보이게 lg 추가
                 'placeholder': '제목을 입력하세요'
             }),
+            # Summernote 설정 보완
             'content': SummernoteWidget(attrs={
-                'summernote': {'width': '100%', 'height': '400px'}
+                'summernote': {
+                    'width': '100%', 
+                    'height': '400px',
+                    'toolbar': [
+                        ['style', ['style']],
+                        ['font', ['bold', 'underline', 'clear']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                        ['table', ['table']],
+                        ['insert', ['link', 'picture', 'video']], # 이미지 삽입 버튼 포함
+                        ['view', ['fullscreen', 'codeview', 'help']],
+                    ],
+                }
             }),
-            'file': forms.FileInput(attrs={
+            'file': forms.ClearableFileInput(attrs={
                 'class': 'form-control'
             }),
         }
