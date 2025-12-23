@@ -182,9 +182,6 @@ SUMMERNOTE_CONFIG = {
 
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-# 3. URL 설정
-STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 
 # 2. 미디어 파일 (Media) -> S3로 가라!
