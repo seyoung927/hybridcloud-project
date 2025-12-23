@@ -1,5 +1,5 @@
 from django import forms
-from .models import Board
+from .models import Board, Post, Message
 from django_summernote.widgets import SummernoteWidget
 
 class BoardCreationForm(forms.ModelForm):
