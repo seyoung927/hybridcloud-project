@@ -1,18 +1,16 @@
-# 가상환경 폴더 (절대 올리면 안 됨!)
-venv/
-env/
-
-# 파이썬 컴파일 파일 (필요 없음)
-*.pyc
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# 데이터베이스 파일 (로컬 테스트용은 올리지 않음)
+# Django
 db.sqlite3
 
-# 맥(Mac) 사용 시 생기는 쓰레기 파일
+# Virtualenv
+myvenv/
+venv/
+
+# OS
 .DS_Store
-
-# 환경변수 파일 (비밀번호 숨길 때 사용)
-.env
-
 

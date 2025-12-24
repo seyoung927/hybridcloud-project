@@ -1,0 +1,220 @@
+{# templates/reservation/calendar.html #}
+{% extends "base.html" %}
+{% load reservation_extras %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="fw-bold mb-1">시설예약</h3>
+    <div class="text-muted small">{{ title }}</div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary"
+       href="{% url 'reservation:calendar' %}?view=month&date={{ base|date:'Y-m-d' }}">월간</a>
+    <a class="btn btn-outline-secondary"
+       href="{% url 'reservation:calendar' %}?view=week&date={{ base|date:'Y-m-d' }}">주간</a>
+    <a class="btn btn-primary" href="{% url 'reservation:create' %}">예약하기</a>
+
+    {# ✅ superuser 또는 시설담당자도 승인대기 접근 가능 #}
+    {% if user.is_superuser or user.facilities_to_approve.exists %}
+      <a class="btn btn-outline-danger" href="{% url 'reservation:approvals' %}">승인대기</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if view == "week" %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row g-3">
+        {% for d, items in by_day.items %}
+          <div class="col-md-6 col-xl-4">
+            <div class="border rounded p-3 h-100">
+              <div class="fw-bold mb-2">{{ d|date:"m/d (D)" }}</div>
+
+              {% if items %}
+                <ul class="list-unstyled mb-0">
+                  {% for b in items %}
+                    <li class="mb-2">
+                      <div class="small text-muted">{{ b.facility.name }}</div>
+                      <div class="fw-semibold">
+                        {{ b.start_time }}~{{ b.end_time }}
+                        · {{ b.user.nickname|default:b.user.username }}
+                        · {{ b.title|default:"(제목없음)" }}
+                        {% if b.status == "PENDING" %}
+                          <span class="badge text-bg-warning">대기</span>
+                        {% elif b.status == "APPROVED" %}
+                          <span class="badge text-bg-success">승인</span>
+                        {% endif %}
+                      </div>
+
+                      {# ✅ 취소는 모달로 처리 (POST 전용) #}
+                      {% if b|can_cancel:user %}
+                        <button type="button"
+                                class="btn btn-link text-danger p-0 small js-open-cancel-modal"
+                                data-bs-toggle="modal"
+                                data-bs-target="#cancelModal"
+                                data-cancel-url="{% url 'reservation:cancel' b.id %}"
+                                data-facility="{{ b.facility.name }}"
+                                data-date="{{ b.date }}"
+                                data-time="{{ b.start_time }}~{{ b.end_time }}">
+                          취소
+                        </button>
+                      {% endif %}
+
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <div class="text-muted small">예약 없음</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+{% else %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-2 p-md-3">
+
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="text-center">월</th>
+              <th class="text-center">화</th>
+              <th class="text-center">수</th>
+              <th class="text-center">목</th>
+              <th class="text-center">금</th>
+              <th class="text-center">토</th>
+              <th class="text-center">일</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for week in month_grid %}
+              <tr style="height: 130px;">
+                {% for day in week %}
+                  <td class="p-2 {% if day.month != base.month %}bg-light{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="fw-bold small">{{ day.day }}</div>
+                      <a class="small text-decoration-none"
+                         href="{% url 'reservation:create' %}?date={{ day|date:'Y-m-d' }}">+</a>
+                    </div>
+
+                    <div class="mt-1" style="max-height: 90px; overflow:auto;">
+                      {% for b in by_day|get_item:day %}
+                        <div class="small mb-1">
+                          <span class="text-muted">{{ b.start_time|time:"H:i" }}</span>
+                          <span class="fw-semibold">{{ b.facility.name }}</span>
+                          <span>· {{ b.user.nickname|default:b.user.username }}</span>
+                          {% if b.status == "PENDING" %}
+                            <span class="badge text-bg-warning">대기</span>
+                          {% elif b.status == "APPROVED" %}
+                            <span class="badge text-bg-success">승인</span>
+                          {% endif %}
+
+                          {# ✅ 월간에서도 취소는 모달로 처리 #}
+                          {% if b|can_cancel:user %}
+                            <button type="button"
+                                    class="btn btn-link text-danger p-0 small js-open-cancel-modal"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#cancelModal"
+                                    data-cancel-url="{% url 'reservation:cancel' b.id %}"
+                                    data-facility="{{ b.facility.name }}"
+                                    data-date="{{ b.date }}"
+                                    data-time="{{ b.start_time }}~{{ b.end_time }}">
+                              취소
+                            </button>
+                          {% endif %}
+                        </div>
+                      {% empty %}
+                        <div class="text-muted small"> </div>
+                      {% endfor %}
+                    </div>
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+{% endif %}
+
+{# ======================================================
+   공통 취소 모달(POST)
+   - cancel_reason 입력(관리자급은 views에서 필수 검증)
+   - 버튼 클릭 시 data-cancel-url로 action을 바꿔서 제출
+   ====================================================== #}
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="cancelForm" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="cancelModalLabel">예약 취소</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-2">
+            <div class="small text-muted">대상</div>
+            <div class="fw-semibold" id="cancelTargetText">-</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="cancelReason" class="form-label">취소 사유</label>
+            <input type="text"
+                   class="form-control"
+                   id="cancelReason"
+                   name="cancel_reason"
+                   placeholder="관리자 취소 시 사유 필수">
+            <div class="form-text">
+              관리자(슈퍼유저 또는 시설 관리급) 취소 시 사유가 없으면 취소가 거절됩니다.
+            </div>
+          </div>
+
+          <div class="alert alert-warning mb-0" role="alert">
+            취소 후에는 상태가 <strong>CANCELED</strong>로 기록됩니다.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">닫기</button>
+          <button type="submit" class="btn btn-danger"
+                  onclick="return confirm('정말 취소하시겠습니까?');">취소 확정</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const form = document.getElementById('cancelForm');
+    const targetText = document.getElementById('cancelTargetText');
+    const reasonInput = document.getElementById('cancelReason');
+
+    document.querySelectorAll('.js-open-cancel-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const url = btn.getAttribute('data-cancel-url');
+        const facility = btn.getAttribute('data-facility') || '';
+        const d = btn.getAttribute('data-date') || '';
+        const t = btn.getAttribute('data-time') || '';
+
+        form.action = url;
+        targetText.textContent = `${facility} / ${d} / ${t}`;
+        reasonInput.value = ''; // 매번 초기화
+        reasonInput.focus();
+      });
+    });
+  })();
+</script>
+
+{% endblock %}
