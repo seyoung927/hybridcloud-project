@@ -26,7 +26,7 @@
               <a href="/accounts/logout/" class="btn btn-outline-secondary">로그아웃</a>
             {% else %}
               <a href="/accounts/login/" class="btn btn-primary">로그인</a>
-              <a href="/community/" class="btn btn-outline-secondary">둘러보기</a>
+              <a href="{% url 'board_list' %}" class="btn btn-outline-secondary">둘러보기</a>
             {% endif %}
           </div>
 

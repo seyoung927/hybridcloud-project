@@ -40,31 +40,28 @@ def month_range(any_day: date):
     return first, last
 
 
-def week_range(any_day: date):
-    # Monday=0
-    start = any_day - timedelta(days=any_day.weekday())
-    end = start + timedelta(days=6)
-    return start, end
-
-
 @login_required
 def calendar_view(request):
-    view = request.GET.get("view", "month")  # month | week
-    date_str = request.GET.get("date")       # YYYY-MM-DD
+    # ✅ 월간만 사용: view 파라미터는 더 이상 받지 않음(있어도 무시)
+    date_str = request.GET.get("date")  # YYYY-MM-DD
 
     if date_str:
-        base = date.fromisoformat(date_str)
+        try:
+            base = date.fromisoformat(date_str)
+        except ValueError:
+            # 잘못된 date 파라미터가 와도 500 터지지 않게 방어
+            base = timezone.localdate()
     else:
         base = timezone.localdate()
 
+    # ✅ 항상 해당 달 1일 기준으로 고정(월 이동/말일 케이스 안정)
+    base = base.replace(day=1)
+
     facilities = Facility.objects.filter(is_active=True).order_by("name")
 
-    if view == "week":
-        start, end = week_range(base)
-        title = f"{start} ~ {end} (주간)"
-    else:
-        start, end = month_range(base)
-        title = f"{start.strftime('%Y-%m')} (월간)"
+    # ✅ 월간 범위만 계산
+    start, end = month_range(base)
+    title = f"{start.strftime('%Y-%m')} (월간)"
 
     # ✅ 정책: 취소된 예약(CANCELED)은 달력에서 숨김(깔끔)
     # ✅ 정책: 일반 사용자/관리자 모두 PENDING + APPROVED는 달력에서 확인 가능
@@ -83,14 +80,26 @@ def calendar_view(request):
     for b in bookings:
         by_day.setdefault(b.date, []).append(b)
 
-    # 달력(월간) 그리드 생성
-    month_grid = None
-    if view != "week":
-        cal = calendar.Calendar(firstweekday=0)  # Monday start
-        month_grid = cal.monthdatescalendar(base.year, base.month)
+    # ✅ 월간 그리드는 항상 생성
+    cal = calendar.Calendar(firstweekday=0)  # Monday start
+    month_grid = cal.monthdatescalendar(base.year, base.month)
+
+    # ✅ 이전달/다음달은 파이썬에서 안전하게 계산해서 템플릿으로 전달
+    def add_months(d: date, months: int) -> date:
+        y = d.year + (d.month - 1 + months) // 12
+        m = (d.month - 1 + months) % 12 + 1
+        return date(y, m, 1)
+
+    prev_month = add_months(base, -1)
+    next_month = add_months(base, 1)
+
+    # ✅ 모달용: 연도/월 옵션 (현재 기준 ±3년)
+    year_options = list(range(base.year - 3, base.year + 4))  # ex) 2022~2028
+    month_options = [f"{i:02d}" for i in range(1, 13)]        # "01"~"12"
 
     ctx = {
-        "view": view,
+        # view 키는 템플릿에서 더 안 쓰지만, 혹시 다른 곳에서 참고하면 안전하게 고정
+        "view": "month",
         "base": base,
         "start": start,
         "end": end,
@@ -98,6 +107,10 @@ def calendar_view(request):
         "facilities": facilities,
         "by_day": by_day,
         "month_grid": month_grid,
+        "prev_month": prev_month,
+        "next_month": next_month,
+        "year_options": year_options,
+        "month_options": month_options,
     }
     return render(request, "reservation/calendar.html", ctx)
 

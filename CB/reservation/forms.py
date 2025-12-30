@@ -1,26 +1,53 @@
 # reservation/forms.py
 from __future__ import annotations
 
+from datetime import time
+
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from .models import Booking, Facility, _floor_time_to_slot, _ceil_time_to_slot
 
 
+AMPM_CHOICES = [("AM", "오전"), ("PM", "오후")]
+HOUR_CHOICES = [(str(i), f"{i}시") for i in range(1, 13)]
+MIN_CHOICES = [("00", "00분"), ("30", "30분")]
+
+
 class BookingForm(forms.ModelForm):
+    # ✅ VMware/브라우저 이슈 대응: 클릭 선택 가능한 12시간제 필드(가짜 필드)
+    start_ampm = forms.ChoiceField(choices=AMPM_CHOICES, label="시작(오전/오후)")
+    start_hour = forms.ChoiceField(choices=HOUR_CHOICES, label="시작(시)")
+    start_min = forms.ChoiceField(choices=MIN_CHOICES, label="시작(분)")
+
+    end_ampm = forms.ChoiceField(choices=AMPM_CHOICES, label="종료(오전/오후)")
+    end_hour = forms.ChoiceField(choices=HOUR_CHOICES, label="종료(시)")
+    end_min = forms.ChoiceField(choices=MIN_CHOICES, label="종료(분)")
+
     class Meta:
         model = Booking
-        fields = ["facility", "date", "start_time", "end_time", "title"]
+        # start_time/end_time은 셀렉트에서 받은 값을 clean()에서 합성해서 넣음
+        fields = ["facility", "date", "title"]
+        labels = {
+            "title": "사유",
+        }
         widgets = {
-            "date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "start_time": forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
-            "end_time": forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
-            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "예약 제목(선택)"}),
+            "date": forms.DateInput(
+                attrs={"type": "date", "class": "form-control"}
+            ),
+            "title": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "사유"}
+            ),
         }
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._user = user  # save()에서 사용
+
+        # ✅ 날짜 기본값: 오늘
+        if not self.initial.get("date"):
+            self.initial["date"] = timezone.localdate()
 
         qs = Facility.objects.filter(is_active=True)
 
@@ -30,14 +57,62 @@ class BookingForm(forms.ModelForm):
 
         if user.is_superuser:
             self.fields["facility"].queryset = qs
-            return
+        else:
+            # ✅ “예약 가능한 시설만” 보여주기
+            # - 현재 정책상 제한을 두지 않으므로 비활성만 제외하고 모두 노출
+            self.fields["facility"].queryset = qs
 
-        # ✅ “예약 가능한 시설만” 보여주기
-        # - 정책상 부서/직급 제한을 두지 않더라도,
-        #   Facility에 제한값(allowed_departments/allowed_ranks/min_rank_level)이 설정되어 있을 수 있으므로
-        #   can_book() 기준으로 필터링
-        allowed_ids = [f.id for f in qs if f.can_book(user)]
-        self.fields["facility"].queryset = qs.filter(id__in=allowed_ids)
+        # facility 위젯 스타일(bootstrap)
+        self.fields["facility"].widget.attrs.update({"class": "form-select"})
+
+        # ✅ 12시간제 셀렉트 위젯 스타일(bootstrap)
+        self.fields["start_ampm"].widget.attrs.update({"class": "form-select time-select"})
+        self.fields["start_hour"].widget.attrs.update({"class": "form-select time-select-hour"})
+        self.fields["start_min"].widget.attrs.update({"class": "form-select time-select-min"})
+
+        self.fields["end_ampm"].widget.attrs.update({"class": "form-select time-select"})
+        self.fields["end_hour"].widget.attrs.update({"class": "form-select time-select-hour"})
+        self.fields["end_min"].widget.attrs.update({"class": "form-select time-select-min"})
+
+        # 기본값: 09:00 ~ 09:30
+        self.fields["start_ampm"].initial = "AM"
+        self.fields["start_hour"].initial = "9"
+        self.fields["start_min"].initial = "00"
+        self.fields["end_ampm"].initial = "AM"
+        self.fields["end_hour"].initial = "9"
+        self.fields["end_min"].initial = "30"
+
+        # 수정 화면(instance)일 때 기존 start_time/end_time을 12시간제로 쪼개서 초기값 설정
+        if self.instance and self.instance.pk:
+            sh = self.instance.start_time.hour
+            sm = self.instance.start_time.minute
+            eh = self.instance.end_time.hour
+            em = self.instance.end_time.minute
+
+            self.fields["start_ampm"].initial = "PM" if sh >= 12 else "AM"
+            self.fields["start_hour"].initial = str(
+                (sh - 12) if sh > 12 else (12 if sh == 0 else sh)
+            )
+            self.fields["start_min"].initial = f"{sm:02d}"
+
+            self.fields["end_ampm"].initial = "PM" if eh >= 12 else "AM"
+            self.fields["end_hour"].initial = str(
+                (eh - 12) if eh > 12 else (12 if eh == 0 else eh)
+            )
+            self.fields["end_min"].initial = f"{em:02d}"
+
+    def _to_24h(self, ampm: str, hour_str: str, min_str: str) -> time:
+        h = int(hour_str)
+        m = int(min_str)
+
+        if ampm == "AM":
+            if h == 12:
+                h = 0
+        else:  # PM
+            if h != 12:
+                h += 12
+
+        return time(hour=h, minute=m)
 
     # --------------------
     # 폼 유효성 검사
@@ -47,27 +122,39 @@ class BookingForm(forms.ModelForm):
 
         user = self._user
         facility = cleaned.get("facility")
-        date = cleaned.get("date")
-        start_time = cleaned.get("start_time")
-        end_time = cleaned.get("end_time")
+        date_val = cleaned.get("date")
 
-        # 필수값 누락 시 추가검증 불가
-        if not facility or not date or not start_time or not end_time:
+        # ✅ 셀렉트 값으로 start_time/end_time 합성
+        try:
+            start_time = self._to_24h(
+                cleaned.get("start_ampm"),
+                cleaned.get("start_hour"),
+                cleaned.get("start_min"),
+            )
+            end_time = self._to_24h(
+                cleaned.get("end_ampm"),
+                cleaned.get("end_hour"),
+                cleaned.get("end_min"),
+            )
+        except Exception:
             return cleaned
 
-        # 시설 예약 가능 여부(안전)
+        if not facility or not date_val:
+            return cleaned
+
+        # 시설 예약 가능 여부(최종 방어)
         if user and getattr(user, "is_authenticated", False) and not user.is_superuser:
             if not facility.can_book(user):
                 raise ValidationError("해당 시설을 예약할 권한이 부족합니다.")
 
         # ✅ 30분 슬롯 자동 라운딩(정책)
-        # - start_time: 30분 단위 내림
-        # - end_time  : 30분 단위 올림
         start_time = _floor_time_to_slot(start_time)
         end_time = _ceil_time_to_slot(end_time)
 
         cleaned["start_time"] = start_time
         cleaned["end_time"] = end_time
+        self.instance.start_time = start_time
+        self.instance.end_time = end_time
 
         if end_time <= start_time:
             raise ValidationError("종료 시간은 시작 시간보다 늦어야 합니다.")
@@ -75,7 +162,7 @@ class BookingForm(forms.ModelForm):
         # ✅ 충돌 검사(정책: APPROVED만 점유로 봄)
         conflict_qs = Booking.objects.filter(
             facility=facility,
-            date=date,
+            date=date_val,
             status=Booking.Status.APPROVED,
             start_time__lt=end_time,
             end_time__gt=start_time,
@@ -101,12 +188,12 @@ class BookingForm(forms.ModelForm):
         """
         booking: Booking = super().save(commit=False)
 
-        # 예약자 세팅(뷰에서도 가능하지만, 폼에서도 안전장치로 보장)
+        # 예약자 세팅
         if self._user and getattr(self._user, "is_authenticated", False):
             if not booking.user_id:
                 booking.user = self._user
 
-        # 생성(Create): 항상 PENDING
+        # 생성(Create)
         if booking.pk is None:
             booking.status = Booking.Status.PENDING
             booking.approved_by = None
@@ -119,7 +206,7 @@ class BookingForm(forms.ModelForm):
             booking.cancel_reason = ""
 
         else:
-            # 수정(Update): 승인된 예약이 “시간/날짜/시설” 변경되면 재승인
+            # 수정(Update): 승인된 예약 변경 시 재승인
             prev = Booking.objects.filter(pk=booking.pk).only(
                 "status", "facility_id", "date", "start_time", "end_time"
             ).first()
@@ -133,14 +220,13 @@ class BookingForm(forms.ModelForm):
                 )
                 if changed:
                     booking.status = Booking.Status.PENDING
-                    # ✅ 재승인 필요 → 기존 결정/반려 기록 초기화
                     booking.approved_by = None
                     booking.approved_at = None
                     booking.rejected_by = None
                     booking.rejected_at = None
                     booking.rejection_reason = ""
 
-        # 모델 레벨 clean()까지 포함한 최종 검증
+        # 모델 레벨 최종 검증
         booking.full_clean()
 
         if commit:
