@@ -1,15 +1,15 @@
 {% load static %}
-<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-white border-end shadow-sm" style="min-height: 100vh; position: sticky; top: 0; align-self: flex-start;">
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-white border-end shadow-sm" 
+     style="position: sticky; top: 0; height: 100vh; align-self: flex-start; z-index: 1000;">
     
-    <div class="d-flex flex-column pt-3 h-100 align-items-center">
+    <div class="d-flex flex-column pt-3 h-100 overflow-y-auto">
         
         {% if user.is_authenticated %}
-            <div class="profile-card mx-3 p-3 mb-3 text-center bg-light rounded border w-100" style="flex-shrink: 0;">
-                
+            <div class="profile-card mx-3 p-3 mb-3 text-center bg-light rounded border" style="flex-shrink: 0;">
                 {% if user.profile_image %}
-                    <img src="{{ user.profile_image.url }}" class="rounded-circle mb-2" width="70" height="70" style="object-fit: cover; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <img src="{{ user.profile_image.url }}" class="rounded-circle mb-2 profile-img-fixed" width="70" height="70">
                 {% else %}
-                    <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center mx-auto mb-2" style="width: 70px; height: 70px; color: white; font-size: 30px;">
+                    <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center mx-auto mb-2 profile-img-fixed" style="width: 70px; height: 70px; color: white; font-size: 30px;">
                         <i class="bi bi-person-fill"></i>
                     </div>
                 {% endif %}
@@ -33,18 +33,15 @@
                     </button>
                 </form>
             </div>
-
         {% else %}
             <div class="mx-3 p-4 mb-3 text-center bg-light rounded border">
                 <i class="bi bi-shield-lock-fill fs-1 text-secondary mb-2"></i>
                 <p class="small text-muted mb-3">사내 업무 시스템입니다.<br>로그인 후 이용해주세요.</p>
-                <a href="{% url 'login' %}" class="btn btn-primary w-100 fw-bold">
-                    로그인 하기
-                </a>
+                <a href="{% url 'login' %}" class="btn btn-primary w-100 fw-bold">로그인 하기</a>
             </div>
         {% endif %}
 
-        <ul class="nav flex-column px-2 w-100">
+        <ul class="nav flex-column px-2">
             <li class="nav-item mb-1">
                 <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'board_list' %}">
                     <i class="bi bi-grid-fill me-3 fs-5"></i> 
@@ -76,8 +73,7 @@
         <ul class="nav flex-column px-2 mb-2">
             <li class="nav-item">
                 <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'all_posts' %}">
-                    <i class="bi bi-card-list me-3"></i>
-                    전체 글 보기
+                    <i class="bi bi-card-list me-3"></i> 전체 글 보기
                 </a>
             </li>
         </ul>
@@ -93,93 +89,61 @@
                         <i class="bi bi-people-fill me-3"></i> 관리자센터
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-danger hover-bg-light rounded p-2" href="/admin" target="_blank">
-                        <i class="bi bi-database-fill me-3"></i> DB 관리 (Django)
-                    </a>
-                </li>
-            </ul>
-
+            </li>
         {% endif %}
-        <hr class="my-3 mx-3">
 
-        <div class="mt-auto px-3 pb-3">
-    <div class="card border shadow-sm bg-white" style="height: 200px;">
-        <div class="card-header bg-success text-white py-2 px-3 d-flex justify-content-between align-items-center">
-            <span class="small fw-bold"><i class="bi bi-circle-fill text-warning me-1 small"></i>접속중</span>
-            <span class="badge bg-white text-success rounded-pill">{{ online_users_list.count }}명</span>
+        <div class="mt-auto px-3 pb-3" style="flex-shrink: 0;">
+            <div class="card border shadow-sm bg-white" style="height: 180px;">
+                <div class="card-header bg-success text-white py-1 px-3 d-flex justify-content-between align-items-center">
+                    <span class="small fw-bold"><i class="bi bi-circle-fill text-warning me-1 small"></i>접속중</span>
+                    <span class="badge bg-white text-success rounded-pill">{{ online_users_list.count }}명</span>
+                </div>
+                <div class="card-body p-0 overflow-auto">
+                    <ul class="list-group list-group-flush small">
+                        {% for online_user in online_users_list %}
+                        <li class="list-group-item d-flex align-items-center px-3 py-2 border-0">
+                            {% if online_user.profile_image %}
+                                <img src="{{ online_user.profile_image.url }}" class="rounded-circle me-2" width="24" height="24" style="object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center me-2" style="width: 24px; height: 24px; color: white; font-size: 10px;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            {% endif %}
+                            <div class="text-truncate" style="max-width: 80px;">
+                                <span class="fw-bold d-block lh-1" style="font-size: 0.8rem;">{{ online_user.nickname }}</span>
+                                <span class="text-muted" style="font-size: 0.7rem;">{{ online_user.department.name|default:"-" }}</span>
+                            </div>
+                            <span class="ms-auto text-success">●</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
         </div>
-        
-        <div class="card-body p-0 overflow-auto" style="height: 100%;">
-            <ul class="list-group list-group-flush small">
-                {% for online_user in online_users_list %}
-                <li class="list-group-item d-flex align-items-center px-3 py-2 border-0">
-                    {% if online_user.profile_image %}
-                        <img src="{{ online_user.profile_image.url }}" class="rounded-circle me-2" width="24" height="24" style="object-fit: cover;">
-                    {% else %}
-                        <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center me-2" style="width: 24px; height: 24px; color: white; font-size: 12px;">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                    {% endif %}
-                    
-                    <div class="text-truncate" style="max-width: 100px;">
-                        <span class="fw-bold d-block lh-1">{{ online_user.nickname }}</span>
-                        <span class="text-muted" style="font-size: 0.75rem;">{{ online_user.department.name|default:"-" }}</span>
-                    </div>
-                    
-                    <span class="ms-auto text-success" title="온라인">●</span>
-                </li>
-                {% empty %}
-                <li class="list-group-item text-center text-muted py-4">
-                    접속자가 없습니다.
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</div>
-
     </div> 
 </nav>
 
 <style>
+    /* [핵심 CSS] 늘어남 방지 및 호버 효과 */
     .hover-bg-light:hover {
         background-color: #f8f9fa;
         color: #0d6efd !important;
         transition: 0.2s;
     }
-    .nav-link.active {
-        color: #0d6efd;
-        background-color: #e7f1ff;
-    }
-    .sidebar {
-        height: auto;
-        min-height: 100vh;
-    }
-
-    /* 스크롤 시 내부 요소가 부드럽게 보이도록 설정 */
-    #sidebarMenu .d-flex {
-        height: 100%;
-        min-height: 100vh;
+    
+    /* 프로필 이미지 일그러짐 강제 방지 */
+    .profile-img-fixed {
+        aspect-ratio: 1 / 1 !important;
+        object-fit: cover !important;
+        flex-shrink: 0 !important;
     }
 
-    /* 호버 효과 유지 */
-    .hover-bg-light:hover {
-        background-color: #f8f9fa;
-        color: #0d6efd !important;
-        transition: 0.2s;
+    /* 사이드바 전체 스크롤바 디자인 (선택사항) */
+    #sidebarMenu .d-flex::-webkit-scrollbar {
+        width: 4px;
     }
-    #sidebarMenu img.rounded-circle {
-        aspect-ratio: 1 / 1; /* 가로세로 비율 1:1 고정 */
-        object-fit: cover;
-        flex-shrink: 0; /* 압축이나 늘림 방지 */
-    }
-
-    /* 사이드바 메뉴 아이콘 고정 */
-    #sidebarMenu .bi {
-        flex-shrink: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+    #sidebarMenu .d-flex::-webkit-scrollbar-thumb {
+        background: #eee;
+        border-radius: 10px;
     }
 </style>
