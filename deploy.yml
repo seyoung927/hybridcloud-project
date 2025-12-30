@@ -1,0 +1,104 @@
+name: AMI 기반 롤링 업데이트 (Django)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-roll-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      # [1] GitHub 저장소 체크아웃
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # [2] AWS 인증 설정
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # [3] Django 프로젝트 압축 및 S3 업로드
+      - name: Create and Upload Deployment Package
+        run: |
+          echo "[1/3] Creating zip..."
+          zip -r connectFit-deploy.zip . -x "*.git*" ".github/*" "__pycache__/*" "*.pyc" "venv/*"
+          echo "[2/3] Uploading to S3..."
+          aws s3 cp connectFit-deploy.zip s3://${{ secrets.S3_BUCKET }}/connectFit-deploy.zip
+          echo "[3/3] Upload successful: s3://${{ secrets.S3_BUCKET }}/connectFit-deploy.zip"
+
+      # [4] Packer를 사용하여 새 AMI 생성
+      - name: Build New AMI with Packer
+        run: |
+          echo "[Packer] Building new AMI..."
+          packer init ami.pkr.hcl
+          packer build \
+            -var "s3_bucket=${{ secrets.S3_BUCKET }}" \
+            -var "db_name=${{ secrets.DB_NAME }}" \
+            -var "db_user=${{ secrets.DB_USER }}" \
+            -var "db_password=${{ secrets.DB_PASSWORD }}" \
+            -var "db_host=${{ secrets.DB_HOST }}" \
+            ami.pkr.hcl
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+
+
+      # [5] 최신 AMI ID 가져오기
+      - name: Get Latest AMI ID
+        id: ami
+        run: |
+          echo "[AMI] Retrieving latest AMI..."
+          AMI_ID=$(aws ec2 describe-images \
+            --owners self \
+            --filters "Name=name,Values=connectFit-django-*" \
+            --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
+            --output text)
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+          echo "[AMI] Latest AMI: $AMI_ID"
+
+      # [6] Launch Template 새 버전 생성
+      - name: Create New Launch Template Version
+        run: |
+          LT_ID=${{ secrets.LAUNCH_TEMPLATE_ID }}
+          echo "[LT] Fetching current version..."
+          LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
+            --launch-template-id $LT_ID \
+            --query 'sort_by(LaunchTemplateVersions, &VersionNumber)[-1].VersionNumber' \
+            --output text)
+          echo "[LT] Creating new version with AMI: ${AMI_ID}"
+          aws ec2 create-launch-template-version \
+            --launch-template-id $LT_ID \
+            --source-version $LATEST_VERSION \
+            --launch-template-data "{
+              \"ImageId\": \"${AMI_ID}\",
+              \"TagSpecifications\": [
+                {\"ResourceType\": \"instance\", \"Tags\": [{\"Key\": \"Name\", \"Value\": \"connectFit-django\"}]}
+              ]
+            }"
+
+      # [7] 기본 Launch Template 버전 갱신
+      - name: Set Default Launch Template Version
+        run: |
+          LT_ID=${{ secrets.LAUNCH_TEMPLATE_ID }}
+          LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
+            --launch-template-id $LT_ID \
+            --query 'sort_by(LaunchTemplateVersions, &VersionNumber)[-1].VersionNumber' \
+            --output text)
+          aws ec2 modify-launch-template \
+            --launch-template-id $LT_ID \
+            --default-version $LATEST_VERSION
+          echo "[LT] Default version updated to ${LATEST_VERSION}"
+
+      # [8] Auto Scaling Group 롤링 업데이트 트리거
+      - name: Trigger ASG Rolling Update
+        run: |
+          echo "[ASG] Starting rolling update..."
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name ${{ secrets.ASG_NAME }} \
+            --strategy Rolling
+          echo "[ASG] Rolling update triggered successfully."
