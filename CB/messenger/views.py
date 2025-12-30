@@ -75,3 +75,12 @@ def view_message(request, message_id):
         msg.save()
         
     return render(request, 'messenger/view_message.html', {'msg': msg})
+
+from django.http import JsonResponse
+
+def check_new_messages(request):
+    # 안 읽은 쪽지(is_read=False) 개수 세기
+    if request.user.is_authenticated:
+        count = Message.objects.filter(receiver=request.user, is_read=False).count()
+        return JsonResponse({'count': count})
+    return JsonResponse({'count': 0})
