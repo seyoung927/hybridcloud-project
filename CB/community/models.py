@@ -134,7 +134,6 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.recipient}에게: {self.message}"
 
-<<<<<<< HEAD
 class Message(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages')
@@ -150,5 +149,4 @@ class Message(models.Model):
         return f"{self.sender} -> {self.recipient}: {self.content[:10]}..."
     
     
-=======
->>>>>>> origin/a5
+

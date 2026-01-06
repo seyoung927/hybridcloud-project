@@ -1,10 +1,7 @@
 from django import forms
-<<<<<<< HEAD
-from .models import Board
-=======
 from .models import Board, Post
 from django_summernote.widgets import SummernoteWidget
->>>>>>> origin/a5
+
 
 class BoardCreationForm(forms.ModelForm):
     class Meta:
@@ -36,8 +33,6 @@ class BoardCreationForm(forms.ModelForm):
             'read_access_ranks': '읽기 허용 직급 (선택 안 하면 전체)',
             'write_access_depts': '쓰기 허용 부서 (선택 안 하면 전체)',
             'write_access_ranks': '쓰기 허용 직급 (선택 안 하면 전체)',
-<<<<<<< HEAD
-=======
         }
 
 # 1. 게시글 작성 폼
@@ -75,5 +70,4 @@ class PostForm(forms.ModelForm):
             'title': '제목',
             'content': '내용',
             'file': '첨부파일',
->>>>>>> origin/a5
         }

@@ -1,15 +1,6 @@
 from django.urls import path
 from . import views
 
-<<<<<<< HEAD
-
-
-urlpatterns = [
-    path('inbox/', views.inbox, name='inbox'),
-    path('send/', views.send_message, name='send_message'),
-    path('message/<int:message_id>/', views.view_message, name='view_message'),
-=======
->>>>>>> origin/a5
 
 urlpatterns = [
     
@@ -23,8 +14,9 @@ urlpatterns = [
     path('post/<int:post_id>/delete/', views.post_delete, name='post_delete'),
     path('all/', views.all_posts, name='all_posts'),  # 전체 글 보기 경로 추가
     path('manage/', views.manage_boards, name='manage_boards'),
-<<<<<<< HEAD
-=======
+    path('inbox/', views.inbox, name='inbox'),
+    path('send/', views.send_message, name='send_message'),
+    path('message/<int:message_id>/', views.view_message, name='view_message'),
     path('manage/edit/<int:board_id>/', views.edit_board, name='edit_board'),
->>>>>>> origin/a5
+    path('manage/edit/<int:board_id>/', views.edit_board, name='edit_board'),
 ]

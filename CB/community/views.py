@@ -195,11 +195,7 @@ def manage_boards(request):
         form = BoardCreationForm(request.POST)
         if form.is_valid():
             form.save()
-<<<<<<< HEAD
-            return redirect('community:manage_boards')  # 생성 후 목록으로 새로고침
-=======
             return redirect('manage_boards')  # 생성 후 목록으로 새로고침
->>>>>>> origin/a5
     else:
         form = BoardCreationForm()
 
@@ -209,8 +205,6 @@ def manage_boards(request):
     return render(request, 'community/manage_boards.html', {
         'form': form,
         'boards': boards
-<<<<<<< HEAD
-=======
     })
 
 @login_required
@@ -237,5 +231,4 @@ def edit_board(request, board_id):
     return render(request, 'community/edit_board.html', {
         'form': form,
         'board': board
->>>>>>> origin/a5
     })
