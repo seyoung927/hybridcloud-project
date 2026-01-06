@@ -1,27 +1,63 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="card shadow-sm">
-    <div class="card-header bg-white py-3">
-        <div class="d-flex justify-content-between">
-            <h5 class="mb-0 fw-bold">쪽지 내용</h5>
-            <small class="text-muted">{{ msg.created_at|date:"Y-m-d H:i" }}</small>
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-envelope-open text-primary me-2"></i>쪽지 내용
+                    </h5>
+                    <small class="text-muted">{{ msg.created_at|date:"Y-m-d H:i" }}</small>
+                </div>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="mb-4 pb-3 border-bottom d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted">보낸 사람:</span>
+                        <span class="fw-bold ms-2 text-dark">{{ msg.sender.nickname }}</span>
+                        {% if msg.sender.department %}
+                            <span class="badge bg-light text-muted fw-normal ms-1">{{ msg.sender.department.name }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if msg.file %}
+                    <div>
+                        <a href="{{ msg.file.url }}" class="btn btn-sm btn-outline-primary" download>
+                            <i class="bi bi-paperclip"></i> 첨부파일 다운로드
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="message-content" style="min-height: 200px; line-height: 1.8;">
+                    {{ msg.content|safe }}
+                </div>
+            </div>
+
+            <div class="card-footer bg-white p-3 text-end border-top-0">
+                <a href="{% url 'inbox' %}" class="btn btn-light px-4 me-2">목록으로</a>
+                
+                {% if msg.sender != user %}
+                    <a href="{% url 'send_message' %}?to={{ msg.sender.username }}" class="btn btn-primary px-4">
+                        <i class="bi bi-reply-fill"></i> 답장하기
+                    </a>
+                {% endif %}
+            </div>
         </div>
-    </div>
-    <div class="card-body p-4">
-        <div class="mb-4 pb-3 border-bottom">
-            <span class="text-muted">보낸 사람:</span>
-            <span class="fw-bold ms-2">{{ msg.sender.nickname }} ({{ msg.sender.department.name }})</span>
-        </div>
-        <div style="min-height: 150px; line-height: 1.6;">
-            {{ msg.content|linebreaksbr }}
-        </div>
-    </div>
-    <div class="card-footer bg-light text-end">
-        <a href="{% url 'inbox' %}" class="btn btn-secondary">목록으로</a>
-        {% if msg.sender != user %}
-            <a href="{% url 'send_message' %}" class="btn btn-primary">답장하기</a>
-        {% endif %}
     </div>
 </div>
+
+<style>
+    /* 쪽지 내부 이미지 크기 제어 */
+    .message-content img {
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 8px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+</style>
 {% endblock %}

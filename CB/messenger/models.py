@@ -2,28 +2,36 @@ from django.db import models
 from django.conf import settings
 
 class Message(models.Model):
-    # ▼ related_name을 'messenger_sent'로 변경
+    # 보내는 사람 (나)
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
-        related_name='messenger_sent',  # 여기가 핵심!
-        verbose_name="보낸 사람"
+        related_name='sent_messages_messenger' # community와 이름 충돌 방지
     )
     
-    # ▼ related_name을 'messenger_received'로 변경
-    receiver = models.ForeignKey(
+    # 👇 [추가] 받는 사람 (forms.py에서 찾던 recipient가 이거!)
+    recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
-        related_name='messenger_received', # 여기가 핵심!
-        verbose_name="받는 사람"
+        related_name='received_messages_messenger'
     )
     
-    content = models.TextField(verbose_name="내용")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="보낸 시간")
-    read_at = models.DateTimeField(null=True, blank=True, verbose_name="읽은 시간")
+    # 👇 [추가] 제목 (forms.py에서 찾던 title)
+    title = models.CharField(max_length=200, default="제목 없음")
     
+    # 내용
+    content = models.TextField()
+    
+    # 👇 [추가] 파일 (forms.py에서 찾던 file)
+    file = models.FileField(upload_to='messenger/files/%Y/%m/%d/', blank=True, null=True)
+    
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.sender} -> {self.receiver} : {self.content[:20]}"
+        return f"[{self.title}] {self.sender} -> {self.recipient}"
+    
+

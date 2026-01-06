@@ -16,21 +16,28 @@
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     
+                    {{ form.media }}
+                    
                     <div class="mb-4">
-                        <label for="title" class="form-label fw-bold">제목</label>
-                        <input type="text" name="title" id="title" class="form-control form-control-lg" placeholder="제목을 입력하세요" required autofocus>
+                        <label class="form-label fw-bold">제목</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="mb-4">
-                        <label for="content" class="form-label fw-bold">내용</label>
-                        <textarea name="content" id="content" rows="12" class="form-control" placeholder="내용을 자유롭게 작성해주세요." required></textarea>
+                        <label class="form-label fw-bold">내용</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="text-danger small mt-1">{{ form.content.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="mb-4">
-                        <label for="file" class="form-label fw-bold">첨부파일</label>
+                        <label class="form-label fw-bold">첨부파일</label>
                         <div class="input-group">
-                            <input type="file" name="file" id="file" class="form-control">
-                            <label class="input-group-text" for="file">업로드</label>
+                            {{ form.file }}
                         </div>
                         <div class="form-text text-muted">
                             <i class="bi bi-info-circle"></i> 이미지나 문서를 첨부할 수 있습니다.

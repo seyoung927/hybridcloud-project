@@ -1,6 +1,7 @@
-from django.urls import path
+from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from . import views
+from django.conf import settings
 
 urlpatterns = [
     # 1. 로그인 (Django 제공 기능 사용)
@@ -23,5 +24,8 @@ urlpatterns = [
     path('manage/create/', views.user_create, name='user_create'),    # 사원 추가
     path('manage/structure/', views.manage_structure, name='manage_structure'), #부서 관리
     path('org/', views.org_chart, name='org_chart'),
+    path('summernote/', include('django_summernote.urls')),
 
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

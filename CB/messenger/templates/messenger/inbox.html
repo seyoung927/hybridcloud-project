@@ -19,20 +19,20 @@
             <thead class="table-light">
                 <tr>
                     <th width="15%">보낸 사람</th>
-                    <th>내용</th>
-                    <th width="20%">날짜</th>
+                    <th>제목</th> <th width="20%">날짜</th>
                 </tr>
             </thead>
             <tbody>
                 {% for msg in messages_list %}
-                <tr class="{% if not msg.read_at %}fw-bold bg-light{% endif %}" style="cursor: pointer;" onclick="location.href='{% url 'view_message' msg.id %}'">
+                <tr class="{% if not msg.is_read %}fw-bold bg-light{% endif %}" style="cursor: pointer;" onclick="location.href='{% url 'view_message' msg.id %}'">
                     <td>
                         {{ msg.sender.nickname }}
                         <small class="text-muted d-block">{{ msg.sender.department.name }}</small>
                     </td>
                     <td>
-                        {% if not msg.read_at %} <span class="badge bg-danger me-1">N</span> {% endif %}
-                        {{ msg.content|truncatechars:30 }}
+                        {% if not msg.is_read %} <span class="badge bg-danger me-1">N</span> {% endif %}
+                        
+                        {{ msg.title }}
                     </td>
                     <td class="text-muted small">{{ msg.created_at|date:"Y-m-d H:i" }}</td>
                 </tr>

@@ -1,20 +1,30 @@
 from django import forms
-from .models import Message
-from django.contrib.auth import get_user_model
+from .models import Message  # ⭐ 쪽지 모델
+from django_summernote.widgets import SummernoteWidget
 
 class MessageForm(forms.ModelForm):
     class Meta:
         model = Message
-        fields = ['receiver', 'content']
+        fields = ['recipient', 'title', 'content', 'file']
+        
         widgets = {
-            'content': forms.Textarea(attrs={'rows': 5, 'class': 'form-control', 'placeholder': '내용을 입력하세요'}),
-            'receiver': forms.Select(attrs={'class': 'form-select'}),
+            'recipient': forms.Select(attrs={
+                'class': 'form-select', 
+            }),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': '제목을 입력하세요'
+            }),
+            'content': SummernoteWidget(attrs={
+                'summernote': {'width': '100%', 'height': '300px'}
+            }),
+            'file': forms.FileInput(attrs={
+                'class': 'form-control'
+            }),
         }
-    
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None) # 현재 로그인한 유저 제외하기 위해 받음
-        super().__init__(*args, **kwargs)
-        if user:
-            # 나 자신에게는 쪽지 못 보내게 필터링
-            User = get_user_model()
-            self.fields['receiver'].queryset = User.objects.exclude(id=user.id)
+        labels = {
+            'recipient': '받는 사람',
+            'title': '제목',
+            'content': '내용',
+            'file': '첨부파일',
+        }
