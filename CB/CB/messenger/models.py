@@ -1,0 +1,37 @@
+from django.db import models
+from django.conf import settings
+
+class Message(models.Model):
+    # 보내는 사람 (나)
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='sent_messages_messenger' # community와 이름 충돌 방지
+    )
+    
+    # 👇 [추가] 받는 사람 (forms.py에서 찾던 recipient가 이거!)
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='received_messages_messenger'
+    )
+    
+    # 👇 [추가] 제목 (forms.py에서 찾던 title)
+    title = models.CharField(max_length=200, default="제목 없음")
+    
+    # 내용
+    content = models.TextField()
+    
+    # 👇 [추가] 파일 (forms.py에서 찾던 file)
+    file = models.FileField(upload_to='messenger/files/%Y/%m/%d/', blank=True, null=True)
+    
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.title}] {self.sender} -> {self.recipient}"
+    
+

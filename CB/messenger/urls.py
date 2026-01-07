@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = "messenger"  # ✅ 추가 권장
+
 urlpatterns = [
     path('', views.inbox, name='inbox'),            # 기본: 받은 편지함
     path('send/', views.send_message, name='send_message'),

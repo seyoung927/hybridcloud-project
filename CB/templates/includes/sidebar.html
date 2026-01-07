@@ -49,7 +49,15 @@
                 </a>
             </li>
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light" href="{% url 'inbox' %}">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light"
+                 href="{% url 'reservation:calendar' %}">
+                    <i class="bi bi-calendar-event-fill me-3 fs-5"></i>
+                    <span class="fw-medium">예약/달력</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a class="nav-link d-flex align-items-center rounded p-2 text-secondary hover-bg-light"
+                    href="{% url 'messenger:inbox' %}">
                     <i class="bi bi-envelope-fill me-3 fs-5"></i> 
                     <span class="fw-medium">쪽지함</span>
                     {% if unread_msg_count > 0 %}
