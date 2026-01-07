@@ -1,0 +1,50 @@
+name: Django CD (Deploy)
+
+# 언제 실행될지 설정: main 브랜치에 코드가 push 되면 자동 실행
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          # GitHub Settings > Secrets에 등록할 변수들
+          host: ${{ secrets.EC2_HOST }}          # 서버 IP 주소
+          username: ${{ secrets.EC2_USERNAME }}  # 서버 접속 계정 (예: ubuntu)
+          key: ${{ secrets.EC2_SSH_KEY }}        # .pem 키 파일 내용 전체
+          
+          # 서버에 접속해서 실행할 명령어들 (본인 프로젝트 경로에 맞게 수정 필요!)
+          script: |
+            echo "====== 배포 시작 ======"
+            
+            # 1. 프로젝트 폴더로 이동 (경로 꼭 확인하세요!)
+            cd ~/hybridcloud-project
+
+            # 2. 최신 코드 받기
+            git pull origin main
+            
+            # 3. 가상환경 켜기 (경로 확인!)
+            source ~/projectB/hybridcloud-project/myenv/bin/activate
+            
+            # 4. 패키지 설치 (새로 추가된 게 있을 수 있으니)
+            pip install -r requirements.txt
+            
+            # 5. DB 마이그레이션 & 스태틱 파일 모으기
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+            
+            # 6. 서버 재시작 (Gunicorn 사용 시)
+            sudo systemctl restart gunicorn
+            
+            # (만약 개발용 runserver를 쓰고 있다면, 기존 것 끄고 다시 켜야 함 - 배포용으론 비추천)
+            # pkill -f runserver || true
+            # nohup python manage.py runserver 0.0.0.0:8000 &
+            
+            echo "====== 배포 완료 ======"
