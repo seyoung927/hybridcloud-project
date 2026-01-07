@@ -29,7 +29,6 @@ urlpatterns = [
     path('messenger/', include('messenger.urls')),
     path('reservation/', include('reservation.urls')),
     path('summernote/', include('django_summernote.urls')),
-    path('summernote/', include('django_summernote.urls')),
 ]
 
 if settings.DEBUG:

@@ -41,7 +41,7 @@
                 <a href="{% url 'inbox' %}" class="btn btn-light px-4 me-2">목록으로</a>
                 
                 {% if msg.sender != user %}
-                    <a href="{% url 'send_message' %}?to={{ msg.sender.username }}" class="btn btn-primary px-4">
+                    <a href="{% url 'send_message' %}?to={{ msg.sender.id }}" class="btn btn-primary px-4">
                         <i class="bi bi-reply-fill"></i> 답장하기
                     </a>
                 {% endif %}

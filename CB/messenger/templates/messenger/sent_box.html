@@ -29,7 +29,7 @@
                 <tr style="cursor: pointer;" onclick="location.href='{% url 'view_message' msg.id %}'">
                     <td>
                         {{ msg.recipient.nickname }}
-                        <small class="text-muted d-block">{{ msg.recipient.department.name }}</small>
+                        <small class="text-muted d-block">{{ msg.recipient.department.name|default:"-" }}</small>
                     </td>
                     <td>
                         {{ msg.title }}

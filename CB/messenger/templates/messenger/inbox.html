@@ -27,7 +27,7 @@
                 <tr class="{% if not msg.is_read %}fw-bold bg-light{% endif %}" style="cursor: pointer;" onclick="location.href='{% url 'view_message' msg.id %}'">
                     <td>
                         {{ msg.sender.nickname }}
-                        <small class="text-muted d-block">{{ msg.sender.department.name }}</small>
+                        <small class="text-muted d-block">{{ msg.sender.department.name|default:"-" }}</small>
                     </td>
                     <td>
                         {% if not msg.is_read %} <span class="badge bg-danger me-1">N</span> {% endif %}
