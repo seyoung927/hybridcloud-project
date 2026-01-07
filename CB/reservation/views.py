@@ -238,12 +238,12 @@ def approval_list(request):
 def booking_approve(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)
 
-    # ✅ 권한: 시설 담당자(approver) 또는 superuser
+    # 1. 권한 체크
     if not booking.can_approve(request.user):
         messages.error(request, "권한이 부족합니다.")
         return redirect("reservation:calendar")
 
-    # ✅ 승인 시점 재검증(정책: APPROVED만 점유)
+    # 2. 승인 로직 (충돌 검사 등)
     with transaction.atomic():
         booking = Booking.objects.select_for_update().get(pk=booking_id)
 
@@ -270,11 +270,30 @@ def booking_approve(request, booking_id):
 
     messages.success(request, "승인 완료")
 
-    notify_message(
-        booking.user,
-        "예약 승인",
-        f"{booking.facility.name} 예약이 승인되었습니다. ({booking.date} {booking.start_time}-{booking.end_time})"
-    )
+    # =========================================================
+    # ✅ [연동] 승인 알림 쪽지 발송 (상세 내용 포함)
+    # =========================================================
+    
+    # 제목: [승인] 시설명 예약 확정
+    msg_title = f"[승인] {booking.facility.name} 예약이 확정되었습니다."
+    
+    # 내용: 일시, 시설명 등 상세 정보
+    # (참고: user.nickname이 없다면 user.username으로 변경하세요)
+    user_name = getattr(booking.user, 'nickname', booking.user.username)
+    
+    msg_content = f"""
+    안녕하세요, {user_name}님.
+    신청하신 시설 예약이 정상적으로 승인되었습니다.
+    
+    - 시설명: {booking.facility.name}
+    - 날짜: {booking.date.strftime('%Y년 %m월 %d일')}
+    - 시간: {booking.start_time} ~ {booking.end_time}
+    
+    깨끗한 이용 부탁드립니다. 감사합니다.
+    """
+
+    # 위에서 정의한 notify_message 함수 재사용
+    notify_message(booking.user, msg_title, msg_content)
 
     return redirect("reservation:approvals")
 
@@ -284,16 +303,18 @@ def booking_approve(request, booking_id):
 def booking_reject(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)
 
-    # ✅ 권한: 시설 담당자(approver) 또는 superuser
+    # 1. 권한 체크
     if not booking.can_approve(request.user):
         messages.error(request, "권한이 부족합니다.")
         return redirect("reservation:calendar")
 
+    # 2. 거절 사유 필수 체크
     reason = (request.POST.get("rejection_reason") or "").strip()
     if not reason:
         messages.error(request, "거절 사유를 입력해야 합니다.")
         return redirect("reservation:approvals")
 
+    # 3. 반려 로직
     with transaction.atomic():
         booking = Booking.objects.select_for_update().get(pk=booking_id)
 
@@ -305,24 +326,38 @@ def booking_reject(request, booking_id):
         booking.rejected_by = request.user
         booking.rejected_at = timezone.now()
         booking.rejection_reason = reason
-
-        # 거절이므로 승인 기록은 비움
+        
         booking.approved_by = None
         booking.approved_at = None
 
         booking.save(update_fields=[
-            "status",
-            "rejected_by", "rejected_at", "rejection_reason",
-            "approved_by", "approved_at",
-            "updated_at"
+            "status", "rejected_by", "rejected_at", "rejection_reason",
+            "approved_by", "approved_at", "updated_at"
         ])
 
     messages.success(request, "반려 처리 완료")
 
-    notify_message(
-        booking.user,
-        "예약 반려",
-        f"{booking.facility.name} 예약이 반려되었습니다. 사유: {reason}"
-    )
+    # =========================================================
+    # ✅ [연동] 반려 알림 쪽지 발송 (거절 사유 포함)
+    # =========================================================
+    
+    msg_title = f"[반려] {booking.facility.name} 예약이 반려되었습니다."
+    
+    user_name = getattr(booking.user, 'nickname', booking.user.username)
+    
+    msg_content = f"""
+    안녕하세요, {user_name}님.
+    아쉽게도 신청하신 예약이 반려되었습니다.
+    
+    - 시설명: {booking.facility.name}
+    - 일시: {booking.date.strftime('%Y-%m-%d')} {booking.start_time} ~ {booking.end_time}
+    
+    🛑 반려 사유:
+    {reason}
+    
+    다른 시간에 이용해주시거나 관리자에게 문의 바랍니다.
+    """
+
+    notify_message(booking.user, msg_title, msg_content)
 
     return redirect("reservation:approvals")
