@@ -1,0 +1,72 @@
+{# templates/reservation/approvals.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="fw-bold mb-0">승인 대기 예약</h3>
+  <a class="btn btn-outline-secondary" href="{% url 'reservation:calendar' %}">달력으로</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    {% if pending %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>시설</th>
+              <th>일자</th>
+              <th>시간</th>
+              <th>예약자</th>
+              <th>제목</th>
+              <th class="text-end">처리</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for b in pending %}
+              <tr>
+                <td>{{ b.facility.name }}</td>
+                <td>{{ b.date }}</td>
+                <td>{{ b.start_time }} ~ {{ b.end_time }}</td>
+                <td>{{ b.user.nickname|default:b.user.username }}</td>
+                <td>{{ b.title|default:"(없음)" }}</td>
+
+                <td class="text-end">
+                  {# ✅ 승인: POST 전용 #}
+                  <form method="post" action="{% url 'reservation:approve' b.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn btn-sm btn-success"
+                            onclick="return confirm('이 예약을 승인할까요?');">
+                      승인
+                    </button>
+                  </form>
+
+                  {# ✅ 반려: POST + 사유 필수(rejection_reason) #}
+                  <form method="post" action="{% url 'reservation:reject' b.id %}" class="d-inline ms-2">
+                    {% csrf_token %}
+                    <input type="text"
+                           name="rejection_reason"
+                           class="form-control form-control-sm d-inline"
+                           style="width: 260px;"
+                           placeholder="반려 사유(필수)"
+                           required>
+                    <button type="submit"
+                            class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('이 예약을 반려할까요?');">
+                      반려
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+    {% else %}
+      <div class="text-muted">승인 대기 예약이 없습니다.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

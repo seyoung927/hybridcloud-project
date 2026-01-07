@@ -1,0 +1,81 @@
+/* static/css/style.css */
+
+/* =========================================
+   1. 전체 배경 및 레이아웃 색상
+========================================= */
+
+/* 전체 배경: 밝고 시원한 파란색 계열 */
+body {
+    background-color: #ffffff; /* 아주 연한 하늘색 */
+    color: #000000 !important; /* ★ 글자색: 완전 검정으로 강제 고정 */
+}
+
+/* 메인 콘텐츠 영역: 흰색 박스로 만들어서 가독성 높임 */
+/* base.html의 main 태그를 타겟팅 */
+main[role="main"] {
+    background-color: #ffffff; /* 순백색 배경 */
+    border-radius: 15px;       /* 모서리를 둥글게 */
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05); /* 부드러운 그림자 효과 */
+    margin-top: 25px;          /* 상단 네비바와 간격 띄우기 */
+    margin-bottom: 25px;       /* 하단 간격 */
+    padding: 35px !important;  /* 박스 내부 여백을 넉넉하게 */
+}
+
+
+.text-muted, .text-secondary {
+    color: #555555 !important; /* 너무 연한 회색 대신 "진한 회색"으로 변경 */
+}
+/* 사이드바: 메인 배경과 어울리는 톤으로 조정 */
+#sidebarMenu {
+    background-color: #c3edff !important; /* 메인보다 살짝 더 밝은 톤 */
+    border-right: 1px solid #6dbdfb;      /* 테두리 색상도 부드럽게 */
+}
+a {
+    color: #333333;
+    text-decoration: none; /* 밑줄 없애기 */
+}
+.nav-link {
+    color: #4f4f4f !important;
+}
+/* =========================================
+   2. 강조 색상 (주황색 테마)
+   요청하신 버튼과 아이콘에 적용할 클래스입니다.
+========================================= */
+
+/* 주황색 아이콘 및 텍스트용 클래스 */
+.text-orange {
+    color: #fd7e14 !important; /* Bootstrap의 기본 주황색 */
+}
+
+/* 주황색 뱃지 (New, ADMIN 등) */
+.bg-orange {
+    background-color: #fd7e14 !important;
+    color: white;
+}
+
+/* 주황색 테두리 버튼 (로그아웃, 삭제 등) */
+.btn-outline-orange {
+    color: #fd7e14;
+    border-color: #fd7e14;
+    font-weight: bold;
+}
+/* 버튼에 마우스 올렸을 때 (Hover) */
+.btn-outline-orange:hover,
+.btn-outline-orange:active {
+    color: #ffffff;
+    background-color: #fd7e14;
+    border-color: #fd7e14;
+}
+
+/* 주황색 배경 버튼 (글쓰기 등) */
+.btn-orange {
+    color: #ffffff;
+    background-color: #fd7e14;
+    border-color: #fd7e14;
+    font-weight: bold;
+}
+.btn-orange:hover,
+.btn-orange:active {
+    background-color: #e36d0c; /* 약간 더 진한 주황색 */
+    border-color: #e36d0c;
+}

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold"><i class="bi bi-pencil-square text-warning me-2"></i>게시판 수정</h3>
+            <p class="text-muted mb-0">게시판 설정을 변경하거나 삭제합니다.</p>
+        </div>
+        <a href="{% url 'manage_boards' %}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> 목록으로
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">이름</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">URL ID(영어)</label>
+                        {{ form.slug }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">설명</label>
+                    {{ form.description }}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="mb-4">
+                    <label class="fw-bold text-primary mb-2"><i class="bi bi-eye"></i> 읽기 권한</label>
+                    <div class="card bg-light border-0 p-3">
+                        <small class="d-block text-muted mb-2">부서</small>
+                        <div class="d-flex flex-wrap gap-3 mb-3">{{ form.read_access_depts }}</div>
+                        <small class="d-block text-muted mb-2">직급</small>
+                        <div class="d-flex flex-wrap gap-3">{{ form.read_access_ranks }}</div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="fw-bold text-danger mb-2"><i class="bi bi-pencil-square"></i> 쓰기 권한</label>
+                    <div class="card bg-light border-0 p-3">
+                        <small class="d-block text-muted mb-2">부서</small>
+                        <div class="d-flex flex-wrap gap-3 mb-3">{{ form.write_access_depts }}</div>
+                        <small class="d-block text-muted mb-2">직급</small>
+                        <div class="d-flex flex-wrap gap-3">{{ form.write_access_ranks }}</div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-5">
+                    <button type="submit" name="delete" class="btn btn-outline-danger" onclick="return confirm('정말 삭제하시겠습니까? 게시글도 모두 사라집니다.');">
+                        <i class="bi bi-trash"></i> 게시판 삭제
+                    </button>
+                    
+                    <button type="submit" class="btn btn-warning fw-bold text-white px-5">
+                        <i class="bi bi-check-lg"></i> 수정 완료
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 체크박스 스타일 */
+    ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+    li { margin-right: 15px; }
+    label { margin-left: 5px; cursor: pointer; }
+</style>
+{% endblock %}

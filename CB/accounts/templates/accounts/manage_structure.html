@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'manage_home' %}" class="text-decoration-none text-secondary">
+        <i class="bi bi-arrow-left"></i> 관리자 홈으로
+    </a>
+    <h3 class="fw-bold mt-2">🏢 조직 구조 관리</h3>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white fw-bold">부서 (Department)</div>
+            <div class="card-body">
+                <form method="POST" class="input-group mb-3">
+                    {% csrf_token %}
+                    <input type="text" name="dept_name" class="form-control" placeholder="새 부서명 입력" required>
+                    <button type="submit" name="add_dept" class="btn btn-primary">추가</button>
+                </form>
+
+                <ul class="list-group">
+                    {% for dept in departments %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ dept.name }}
+                            <form method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" name="delete_dept" value="{{ dept.id }}" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('삭제하시겠습니까?')">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white fw-bold">직급 (Rank)</div>
+            <div class="card-body">
+                <form method="POST" class="input-group mb-3">
+                    {% csrf_token %}
+                    <input type="text" name="rank_name" class="form-control" placeholder="새 직급명 입력" required>
+		    <input type="number" name="rank_level" class="form-control" placeholder="레벨(숫자)" required>
+		    <button type="submit" name="add_rank" class="btn btn-success">추가</button>
+=======
+                    <input type="number" name="rank_level" class="form-control" placeholder="레벨(숫자)" required style="max-width: 100px;">
+                   <button type="submit" name="add_rank" class="btn btn-success">추가</button>
+                    <input type="number" name="rank_level" class="form-control" placeholder="레벨(숫자)" required style="max-width: 100px;">
+                   <button type="submit" name="add_rank" class="btn btn-success">추가</button>
+                </form>
+
+                <ul class="list-group">
+                    {% for r in ranks %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold">{{ r.name }}</span>
+                                <span class="badge bg-secondary ms-2 rounded-pill">Lv.{{ r.level }}</span>
+                            </div>
+
+                            <form method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" name="delete_rank" value="{{ r.id }}" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('삭제하시겠습니까?')">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

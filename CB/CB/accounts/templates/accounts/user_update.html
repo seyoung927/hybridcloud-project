@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 fw-bold">🛠️ 사원 정보 수정</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">사원번호 (ID)</label>
+                        <input type="text" class="form-control bg-light" value="{{ target_user.username }}" disabled>
+                        <div class="form-text small">※ 사원번호는 변경할 수 없습니다.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">이름 (성명)</label>
+                        <input type="text" name="nickname" class="form-control" value="{{ target_user.nickname }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">부서 (Department)</label>
+                        <select name="department" class="form-select">
+                            <option value="">-- 부서 선택 --</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.id }}" {% if target_user.department == dept %}selected{% endif %}>
+                                    {{ dept.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">직급 (Rank)</label>
+                        <select name="rank" class="form-select">
+                            <option value="">-- 직급 선택 --</option>
+                            {% for r in ranks %}
+                                <option value="{{ r.id }}" {% if target_user.rank == r %}selected{% endif %}>
+                                    {{ r.name }} (Lv.{{ r.level }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">저장하기</button>
+                        <a href="{% url 'manage_users' %}" class="btn btn-light">취소</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
