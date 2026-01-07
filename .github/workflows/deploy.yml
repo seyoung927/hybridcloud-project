@@ -20,6 +20,10 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}  # 서버 접속 계정 (예: ubuntu)
           key: ${{ secrets.EC2_SSH_KEY }}        # .pem 키 파일 내용 전체
           
+
+          proxy_host: ${{ secrets.BASTION_HOST }}      # Bastion의 Public IP
+          proxy_username: ${{ secrets.EC2_USERNAME }}  # Bastion 접속 ID (보통 같음)
+          proxy_key: ${{ secrets.EC2_SSH_KEY }}        # Bastion 접속 키 (보통 같음)
           # 서버에 접속해서 실행할 명령어들 (본인 프로젝트 경로에 맞게 수정 필요!)
           script: |
             echo "====== 배포 시작 ======"
@@ -29,9 +33,9 @@ jobs:
 
             # 2. 최신 코드 받기
             git pull origin main
-            
+            cd CB
             # 3. 가상환경 켜기 (경로 확인!)
-            source ~/projectB/hybridcloud-project/myenv/bin/activate
+            source ~/hybridcloud-project/myenv/bin/activate
             
             # 4. 패키지 설치 (새로 추가된 게 있을 수 있으니)
             pip install -r requirements.txt
@@ -41,7 +45,7 @@ jobs:
             python manage.py collectstatic --noinput
             
             # 6. 서버 재시작 (Gunicorn 사용 시)
-            sudo systemctl restart gunicorn
+            # sudo systemctl restart gunicorn
             
             # (만약 개발용 runserver를 쓰고 있다면, 기존 것 끄고 다시 켜야 함 - 배포용으론 비추천)
             # pkill -f runserver || true
