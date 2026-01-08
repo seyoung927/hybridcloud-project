@@ -1,0 +1,363 @@
+# reservation/views.py
+import calendar
+from datetime import date, timedelta
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from .forms import BookingForm
+from .models import Booking, Facility
+
+
+# (선택) 알림용: messenger 앱이 있다면 내부 쪽지로 알림
+def notify_message(to_user, title, content):
+    """
+    messenger 앱 모델 구조를 모르면 여기서 import가 깨질 수 있으니,
+    실제 messenger 모델(예: Message)을 확인 후 아래 로직을 맞추세요.
+    일단은 '연동 지점'만 제공.
+    """
+    try:
+        from messenger.models import Message  # 예: 실제 모델명이 다르면 수정
+        Message.objects.create(
+            sender=None,
+            receiver=to_user,
+            title=title,
+            content=content
+        )
+    except Exception:
+        # 연동 전에는 실패해도 예약 기능이 죽지 않도록 무시
+        pass
+
+
+def month_range(any_day: date):
+    first = any_day.replace(day=1)
+    last_day = calendar.monthrange(first.year, first.month)[1]
+    last = any_day.replace(day=last_day)
+    return first, last
+
+
+@login_required
+def calendar_view(request):
+    # ✅ 월간만 사용: view 파라미터는 더 이상 받지 않음(있어도 무시)
+    date_str = request.GET.get("date")  # YYYY-MM-DD
+
+    if date_str:
+        try:
+            base = date.fromisoformat(date_str)
+        except ValueError:
+            # 잘못된 date 파라미터가 와도 500 터지지 않게 방어
+            base = timezone.localdate()
+    else:
+        base = timezone.localdate()
+
+    # ✅ 항상 해당 달 1일 기준으로 고정(월 이동/말일 케이스 안정)
+    base = base.replace(day=1)
+
+    facilities = Facility.objects.filter(is_active=True).order_by("name")
+
+    # ✅ 월간 범위만 계산
+    start, end = month_range(base)
+    title = f"{start.strftime('%Y-%m')} (월간)"
+
+    # ✅ 정책: 취소된 예약(CANCELED)은 달력에서 숨김(깔끔)
+    # ✅ 정책: 일반 사용자/관리자 모두 PENDING + APPROVED는 달력에서 확인 가능
+    bookings = (Booking.objects
+                .select_related("facility", "user", "user__rank", "user__department")
+                .filter(date__gte=start, date__lte=end)
+                .filter(status__in=[Booking.Status.PENDING, Booking.Status.APPROVED])
+                .order_by("date", "start_time"))
+
+    # 날짜별 묶기
+    by_day = {}
+    cur = start
+    while cur <= end:
+        by_day[cur] = []
+        cur += timedelta(days=1)
+    for b in bookings:
+        by_day.setdefault(b.date, []).append(b)
+
+    # ✅ 월간 그리드는 항상 생성
+    cal = calendar.Calendar(firstweekday=0)  # Monday start
+    month_grid = cal.monthdatescalendar(base.year, base.month)
+
+    # ✅ 이전달/다음달은 파이썬에서 안전하게 계산해서 템플릿으로 전달
+    def add_months(d: date, months: int) -> date:
+        y = d.year + (d.month - 1 + months) // 12
+        m = (d.month - 1 + months) % 12 + 1
+        return date(y, m, 1)
+
+    prev_month = add_months(base, -1)
+    next_month = add_months(base, 1)
+
+    # ✅ 모달용: 연도/월 옵션 (현재 기준 ±3년)
+    year_options = list(range(base.year - 3, base.year + 4))  # ex) 2022~2028
+    month_options = [f"{i:02d}" for i in range(1, 13)]        # "01"~"12"
+
+    ctx = {
+        # view 키는 템플릿에서 더 안 쓰지만, 혹시 다른 곳에서 참고하면 안전하게 고정
+        "view": "month",
+        "base": base,
+        "start": start,
+        "end": end,
+        "title": title,
+        "facilities": facilities,
+        "by_day": by_day,
+        "month_grid": month_grid,
+        "prev_month": prev_month,
+        "next_month": next_month,
+        "year_options": year_options,
+        "month_options": month_options,
+    }
+    return render(request, "reservation/calendar.html", ctx)
+
+
+@login_required
+def booking_create(request):
+    if request.method == "POST":
+        form = BookingForm(request.POST, user=request.user)
+        if form.is_valid():
+            booking = form.save(commit=False)
+
+            # 서버단 최종 체크: 시설 예약 가능 여부
+            if not booking.facility.can_book(request.user):
+                messages.error(request, "권한이 부족합니다.")
+                return redirect("reservation:calendar")
+
+            # ✅ 정책: 생성 시 무조건 PENDING
+            booking.user = request.user
+            booking.status = Booking.Status.PENDING
+            booking.approved_by = None
+            booking.approved_at = None
+            booking.rejected_by = None
+            booking.rejected_at = None
+            booking.rejection_reason = ""
+            booking.canceled_by = None
+            booking.canceled_at = None
+            booking.cancel_reason = ""
+
+            # 시간겹침 검증(정책: APPROVED만 점유)
+            booking.full_clean()
+            booking.save()
+
+            messages.success(request, "예약이 접수되었습니다. 시설 담당자 승인 후 확정됩니다.")
+
+            # 승인자에게 알림(쪽지/메일 연동 지점)
+            if booking.facility.approver:
+                notify_message(
+                    booking.facility.approver,
+                    "예약 승인 요청",
+                    f"{booking.user}님이 {booking.facility.name} 예약을 요청했습니다. "
+                    f"({booking.date} {booking.start_time}-{booking.end_time})"
+                )
+
+            return redirect("reservation:calendar")
+    else:
+        form = BookingForm(user=request.user)
+
+    return render(request, "reservation/booking_form.html", {"form": form})
+
+
+@login_required
+@require_POST
+def booking_cancel(request, booking_id):
+    booking = get_object_or_404(Booking, pk=booking_id)
+
+    # ✅ 정책: 취소는 어느 상태든 가능(단, 권한은 체크)
+    if not booking.can_cancel(request.user):
+        messages.error(request, "권한이 부족합니다.")
+        return redirect("reservation:calendar")
+
+    # ✅ 관리자(시설 기준 관리 가능자 or superuser)는 취소 사유 필수
+    is_admin_actor = request.user.is_superuser or booking.facility.is_senior_for_management(request.user)
+    reason = (request.POST.get("cancel_reason") or "").strip()
+
+    if is_admin_actor and not reason:
+        messages.error(request, "관리자 취소 시 사유를 반드시 입력해야 합니다.")
+        return redirect("reservation:calendar")
+
+    booking.status = Booking.Status.CANCELED
+    booking.canceled_by = request.user
+    booking.canceled_at = timezone.now()
+    if reason:
+        booking.cancel_reason = reason
+
+    booking.save(update_fields=["status", "canceled_by", "canceled_at", "cancel_reason", "updated_at"])
+    messages.success(request, "예약이 취소되었습니다.")
+
+    # 예약자 알림(본인이 취소한 경우는 생략)
+    if booking.user_id and booking.user_id != request.user.id:
+        notify_message(
+            booking.user,
+            "예약 취소",
+            f"{booking.facility.name} 예약이 취소되었습니다. "
+            f"({booking.date} {booking.start_time}-{booking.end_time})"
+            + (f" / 사유: {reason}" if reason else "")
+        )
+
+    return redirect("reservation:calendar")
+
+
+# ----- 승인(시설 담당자)형 -----
+
+@login_required
+def approval_list(request):
+    """
+    ✅ 정책:
+    - superuser 또는 시설담당자(approver)는 PENDING 목록을 볼 수 있음
+    - 시설담당자는 자기 시설의 PENDING만 노출
+    """
+    if request.user.is_superuser:
+        pending = (Booking.objects
+                   .select_related("facility", "user")
+                   .filter(status=Booking.Status.PENDING)
+                   .order_by("date", "start_time"))
+    else:
+        my_facility_ids = Facility.objects.filter(
+            approver=request.user,
+            is_active=True
+        ).values_list("id", flat=True)
+
+        if not my_facility_ids:
+            messages.error(request, "권한이 부족합니다.")
+            return redirect("reservation:calendar")
+
+        pending = (Booking.objects
+                   .select_related("facility", "user")
+                   .filter(status=Booking.Status.PENDING, facility_id__in=list(my_facility_ids))
+                   .order_by("date", "start_time"))
+
+    return render(request, "reservation/approvals.html", {"pending": pending})
+
+
+@login_required
+@require_POST
+def booking_approve(request, booking_id):
+    booking = get_object_or_404(Booking, pk=booking_id)
+
+    # 1. 권한 체크
+    if not booking.can_approve(request.user):
+        messages.error(request, "권한이 부족합니다.")
+        return redirect("reservation:calendar")
+
+    # 2. 승인 로직 (충돌 검사 등)
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().get(pk=booking_id)
+
+        if booking.status != Booking.Status.PENDING:
+            messages.error(request, "이미 처리된 예약입니다.")
+            return redirect("reservation:calendar")
+
+        conflict_qs = Booking.objects.filter(
+            facility=booking.facility,
+            date=booking.date,
+            status=Booking.Status.APPROVED,
+            start_time__lt=booking.end_time,
+            end_time__gt=booking.start_time,
+        ).exclude(pk=booking.pk)
+
+        if conflict_qs.exists():
+            messages.error(request, "승인 중 충돌이 발생했습니다. 최신 예약 현황을 확인하세요.")
+            return redirect("reservation:calendar")
+
+        booking.status = Booking.Status.APPROVED
+        booking.approved_by = request.user
+        booking.approved_at = timezone.now()
+        booking.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
+
+    messages.success(request, "승인 완료")
+
+    # =========================================================
+    # ✅ [연동] 승인 알림 쪽지 발송 (상세 내용 포함)
+    # =========================================================
+    
+    # 제목: [승인] 시설명 예약 확정
+    msg_title = f"[승인] {booking.facility.name} 예약이 확정되었습니다."
+    
+    # 내용: 일시, 시설명 등 상세 정보
+    # (참고: user.nickname이 없다면 user.username으로 변경하세요)
+    user_name = getattr(booking.user, 'nickname', booking.user.username)
+    
+    msg_content = f"""
+    안녕하세요, {user_name}님.
+    신청하신 시설 예약이 정상적으로 승인되었습니다.
+    
+    - 시설명: {booking.facility.name}
+    - 날짜: {booking.date.strftime('%Y년 %m월 %d일')}
+    - 시간: {booking.start_time} ~ {booking.end_time}
+    
+    깨끗한 이용 부탁드립니다. 감사합니다.
+    """
+
+    # 위에서 정의한 notify_message 함수 재사용
+    notify_message(booking.user, msg_title, msg_content)
+
+    return redirect("reservation:approvals")
+
+
+@login_required
+@require_POST
+def booking_reject(request, booking_id):
+    booking = get_object_or_404(Booking, pk=booking_id)
+
+    # 1. 권한 체크
+    if not booking.can_approve(request.user):
+        messages.error(request, "권한이 부족합니다.")
+        return redirect("reservation:calendar")
+
+    # 2. 거절 사유 필수 체크
+    reason = (request.POST.get("rejection_reason") or "").strip()
+    if not reason:
+        messages.error(request, "거절 사유를 입력해야 합니다.")
+        return redirect("reservation:approvals")
+
+    # 3. 반려 로직
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().get(pk=booking_id)
+
+        if booking.status != Booking.Status.PENDING:
+            messages.error(request, "이미 처리된 예약입니다.")
+            return redirect("reservation:calendar")
+
+        booking.status = Booking.Status.REJECTED
+        booking.rejected_by = request.user
+        booking.rejected_at = timezone.now()
+        booking.rejection_reason = reason
+        
+        booking.approved_by = None
+        booking.approved_at = None
+
+        booking.save(update_fields=[
+            "status", "rejected_by", "rejected_at", "rejection_reason",
+            "approved_by", "approved_at", "updated_at"
+        ])
+
+    messages.success(request, "반려 처리 완료")
+
+    # =========================================================
+    # ✅ [연동] 반려 알림 쪽지 발송 (거절 사유 포함)
+    # =========================================================
+    
+    msg_title = f"[반려] {booking.facility.name} 예약이 반려되었습니다."
+    
+    user_name = getattr(booking.user, 'nickname', booking.user.username)
+    
+    msg_content = f"""
+    안녕하세요, {user_name}님.
+    아쉽게도 신청하신 예약이 반려되었습니다.
+    
+    - 시설명: {booking.facility.name}
+    - 일시: {booking.date.strftime('%Y-%m-%d')} {booking.start_time} ~ {booking.end_time}
+    
+    🛑 반려 사유:
+    {reason}
+    
+    다른 시간에 이용해주시거나 관리자에게 문의 바랍니다.
+    """
+
+    notify_message(booking.user, msg_title, msg_content)
+
+    return redirect("reservation:approvals")
