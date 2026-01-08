@@ -176,7 +176,7 @@ SUMMERNOTE_CONFIG = {
 
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
+    
 # 2. 미디어 파일 (Media) -> S3로 가라!
 MEDIA_LOCATION = 'media' # S3 내 media 폴더 경로
 STATICFILES_DIRS = [BASE_DIR / 'static']
