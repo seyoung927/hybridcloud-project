@@ -1,6 +1,5 @@
-<p align="center">
-  <img src="connectFit.png" width="220">
-</p>
+<img width="417" height="265" alt="image" src="https://github.com/user-attachments/assets/f45743f5-6927-4045-b530-f25d5134c04c" />
+
 
 <h1 align="center">ConnectFit</h1>
 
